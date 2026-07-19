@@ -1,5 +1,6 @@
 # Python
 backend/venv/
+backend/.venv/
 backend/__pycache__/
 backend/app/__pycache__/
 backend/app/routers/__pycache__/
@@ -7,6 +8,9 @@ backend/*.db
 backend/*.db-shm
 backend/*.db-wal
 backend/.env
+backend/tests/*.db
+backend/tests/*.db-shm
+backend/tests/*.db-wal
 
 # Node
 frontend/node_modules/

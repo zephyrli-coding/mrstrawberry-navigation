@@ -11,13 +11,16 @@ services:
       - ./data:/app/data
     environment:
       - DATABASE_URL=sqlite:////app/data/navigation.db
-      - JWT_SECRET=${JWT_SECRET}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:20263}
+      - AUTH_SERVICE_JWKS_URL=${AUTH_SERVICE_JWKS_URL:-http://auth-service:20263/.well-known/jwks.json}
+      - AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-navigation}
+      - AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:20261}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:20261}
       - SMTP_HOST=${SMTP_HOST:-smtp.163.com}
       - SMTP_PORT=${SMTP_PORT:-465}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:20261}
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:20261}
     networks:
       - navigation-site-network
 
@@ -25,6 +28,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api
+        - VITE_AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://localhost:20263}
+        - VITE_AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-navigation}
     container_name: navigation-site-frontend
     restart: unless-stopped
     ports:
