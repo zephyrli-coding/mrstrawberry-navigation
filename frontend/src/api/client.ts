@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:20263'
 const AUTH_CLIENT_ID = import.meta.env.VITE_AUTH_CLIENT_ID || 'navigation'
 
@@ -13,6 +15,16 @@ export function redirectToAuthLogin() {
     state: Math.random().toString(36).substring(2),
   })
   window.location.href = `${AUTH_SERVICE_URL}/auth/login?${params.toString()}`
+}
+
+export function redirectToAuthForgotPassword() {
+  const params = new URLSearchParams({
+    client_id: AUTH_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: getRedirectUri(),
+    state: Math.random().toString(36).substring(2),
+  })
+  window.location.href = `${AUTH_SERVICE_URL}/auth/forgot-password?${params.toString()}`
 }
 
 import axios from 'axios'
