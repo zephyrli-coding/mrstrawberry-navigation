@@ -8,6 +8,7 @@ from jose import JWTError, jwt
 
 AUTH_SERVICE_URL = os.getenv("AUTH_SERVICE_URL", "http://localhost:20263")
 AUTH_SERVICE_JWKS_URL = os.getenv("AUTH_SERVICE_JWKS_URL", f"{AUTH_SERVICE_URL}/.well-known/jwks.json")
+AUTH_SERVICE_ISSUER = os.getenv("AUTH_SERVICE_ISSUER", AUTH_SERVICE_URL)
 AUTH_CLIENT_ID = os.getenv("AUTH_CLIENT_ID", "navigation")
 
 
@@ -34,7 +35,7 @@ def decode_auth_token(token: str) -> dict:
         token,
         key,
         algorithms=["RS256"],
-        issuer=AUTH_SERVICE_URL,
+        issuer=AUTH_SERVICE_ISSUER,
         audience=AUTH_CLIENT_ID,
     )
 

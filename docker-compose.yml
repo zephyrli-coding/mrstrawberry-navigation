@@ -13,6 +13,7 @@ services:
       - DATABASE_URL=sqlite:////app/data/navigation.db
       - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth-service:20263}
       - AUTH_SERVICE_JWKS_URL=${AUTH_SERVICE_JWKS_URL:-http://auth-service:20263/.well-known/jwks.json}
+      - AUTH_SERVICE_ISSUER=${AUTH_SERVICE_ISSUER:-http://localhost:20263}
       - AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-navigation}
       - AUTH_CLIENT_SECRET=${AUTH_CLIENT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:20261}
