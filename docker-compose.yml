@@ -31,7 +31,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_URL=/api
-        - VITE_AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://localhost:20263}
+        - VITE_AUTH_SERVICE_URL=${AUTH_SERVICE_PUBLIC_URL:-http://localhost:20263}
         - VITE_AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-navigation}
     container_name: navigation-site-frontend
     restart: unless-stopped
