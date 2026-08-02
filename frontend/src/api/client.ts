@@ -8,21 +8,25 @@ function getRedirectUri(): string {
 }
 
 export function redirectToAuthLogin() {
+  const state = Math.random().toString(36).substring(2)
+  sessionStorage.setItem('oauth_state', state)
   const params = new URLSearchParams({
     client_id: AUTH_CLIENT_ID,
     response_type: 'code',
     redirect_uri: getRedirectUri(),
-    state: Math.random().toString(36).substring(2),
+    state,
   })
   window.location.href = `${AUTH_SERVICE_URL}/auth/login?${params.toString()}`
 }
 
 export function redirectToAuthForgotPassword() {
+  const state = Math.random().toString(36).substring(2)
+  sessionStorage.setItem('oauth_state', state)
   const params = new URLSearchParams({
     client_id: AUTH_CLIENT_ID,
     response_type: 'code',
     redirect_uri: getRedirectUri(),
-    state: Math.random().toString(36).substring(2),
+    state,
   })
   window.location.href = `${AUTH_SERVICE_URL}/auth/forgot-password?${params.toString()}`
 }
