@@ -34,9 +34,9 @@ onMounted(async () => {
     return
   }
 
-  // 校验 state 防止 CSRF；登录前已将 state 写入 sessionStorage
-  const storedState = sessionStorage.getItem('oauth_state')
-  sessionStorage.removeItem('oauth_state')
+  // 校验 state 防止 CSRF；读取后立即删除，确保只能使用一次。
+  const storedState = localStorage.getItem('oauth_state')
+  localStorage.removeItem('oauth_state')
   if (!state || !storedState || state !== storedState) {
     title.value = '登录失败'
     error.value = '状态校验失败，请重新登录'

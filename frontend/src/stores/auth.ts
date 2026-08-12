@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi, type UserResponse } from '@/api/auth'
-import { redirectToAuthLogin } from '@/api/client'
+import { redirectToAuthLogin, redirectToGlobalLogout } from '@/api/client'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
@@ -50,7 +50,7 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value = null
     localStorage.removeItem('access_token')
-    redirectToAuthLogin()
+    redirectToGlobalLogout()
   }
 
   return {
