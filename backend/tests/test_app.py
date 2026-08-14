@@ -99,3 +99,39 @@ def test_auth_callback_creates_user(client):
     assert user.email == email
     assert user.nickname == "Nav Tester"
     db.close()
+
+
+def test_auth_callback_claims_existing_user_by_email(client):
+    from app.models import User
+
+    db = TestingSessionLocal()
+    existing = User(email="legacy@example.com", hashed_pw="legacy-hash", nickname="Legacy")
+    db.add(existing)
+    db.commit()
+    existing_id = existing.id
+    db.close()
+
+    auth_user_id = str(uuid4())
+    with patch("httpx.post") as mock_post, patch("httpx.get") as mock_get:
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {
+            "access_token": "token",
+            "refresh_token": "refresh",
+            "token_type": "bearer",
+            "expires_in": 1800,
+        }
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = {
+            "sub": auth_user_id,
+            "email": "legacy@example.com",
+            "nickname": "Migrated Legacy",
+        }
+        response = client.post("/auth/callback", params={"code": "mock-code"})
+
+    assert response.status_code == 200
+    db = TestingSessionLocal()
+    users = db.query(User).filter(User.email == "legacy@example.com").all()
+    assert len(users) == 1
+    assert users[0].id == existing_id
+    assert users[0].auth_user_id == auth_user_id
+    db.close()

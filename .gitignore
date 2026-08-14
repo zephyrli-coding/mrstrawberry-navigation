@@ -11,6 +11,8 @@ backend/.env
 backend/tests/*.db
 backend/tests/*.db-shm
 backend/tests/*.db-wal
+backend/tests/__pycache__/
+navigation.db
 
 # Node
 frontend/node_modules/
