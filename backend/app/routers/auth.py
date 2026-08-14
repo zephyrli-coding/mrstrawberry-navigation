@@ -71,9 +71,19 @@ def auth_callback(code: str, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.auth_user_id == str(auth_user_id)).first()
     if not user:
+        # Claim a pre-SSO user by its unique email so existing bookmarks and
+        # categories remain attached after migration.
+        user = db.query(User).filter(User.email == email).first()
+        if user:
+            user.auth_user_id = str(auth_user_id)
+
+    if not user:
         user = User(
             auth_user_id=str(auth_user_id),
             email=email,
+            # Compatibility with legacy SQLite schemas where hashed_pw is
+            # still NOT NULL. This value can never authenticate locally.
+            hashed_pw="!auth-service-only!",
             nickname=nickname,
             is_active=True,
         )
@@ -82,7 +92,8 @@ def auth_callback(code: str, db: Session = Depends(get_db)):
         db.refresh(user)
     else:
         # 同步邮箱/昵称
-        if user.email != email or user.nickname != nickname:
+        if user.email != email or user.nickname != nickname or not user.auth_user_id:
+            user.auth_user_id = str(auth_user_id)
             user.email = email
             user.nickname = nickname
             db.commit()

@@ -22,22 +22,25 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./navigation.db")
 def migrate():
     engine = create_engine(DATABASE_URL)
     with engine.connect() as conn:
-        # 检查是否已有 auth_user_id 列
+        # Check both the SSO column and the legacy password nullability. Some
+        # databases already have auth_user_id but still retain NOT NULL.
         if DATABASE_URL.startswith("sqlite"):
-            result = conn.execute(
-                text("PRAGMA table_info(users)")
-            )
-            columns = {row[1] for row in result}
+            table_info = list(conn.execute(text("PRAGMA table_info(users)")))
+            columns = {row[1] for row in table_info}
+            hashed_pw_not_null = any(row[1] == "hashed_pw" and row[3] for row in table_info)
         else:
             result = conn.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'"))
             columns = {row[0] for row in result}
+            hashed_pw_not_null = True
 
-        if "auth_user_id" in columns:
-            print("auth_user_id already exists, skipping.")
+        if "auth_user_id" in columns and not hashed_pw_not_null:
+            print("users table is already auth-service compatible, skipping.")
             return
 
         if DATABASE_URL.startswith("sqlite"):
             # SQLite 需要重建表
+            conn.execute(text("PRAGMA foreign_keys=OFF"))
+            conn.execute(text("DROP TABLE IF EXISTS users_new"))
             conn.execute(text("""
                 CREATE TABLE users_new (
                     id INTEGER PRIMARY KEY,
@@ -51,14 +54,16 @@ def migrate():
                     reset_expires DATETIME
                 )
             """))
-            conn.execute(text("""
-                INSERT INTO users_new (id, email, hashed_pw, nickname, is_active, created_at, reset_token, reset_expires)
-                SELECT id, email, hashed_pw, nickname, is_active, created_at, reset_token, reset_expires FROM users
+            auth_user_select = "auth_user_id" if "auth_user_id" in columns else "NULL"
+            conn.execute(text(f"""
+                INSERT INTO users_new (id, auth_user_id, email, hashed_pw, nickname, is_active, created_at, reset_token, reset_expires)
+                SELECT id, {auth_user_select}, email, hashed_pw, nickname, is_active, created_at, reset_token, reset_expires FROM users
             """))
             conn.execute(text("DROP TABLE users"))
             conn.execute(text("ALTER TABLE users_new RENAME TO users"))
             conn.execute(text("CREATE UNIQUE INDEX ix_users_email ON users(email)"))
             conn.execute(text("CREATE UNIQUE INDEX ix_users_auth_user_id ON users(auth_user_id)"))
+            conn.execute(text("PRAGMA foreign_keys=ON"))
         else:
             conn.execute(text("ALTER TABLE users ADD COLUMN auth_user_id VARCHAR(36)"))
             conn.execute(text("CREATE UNIQUE INDEX ix_users_auth_user_id ON users(auth_user_id)"))
