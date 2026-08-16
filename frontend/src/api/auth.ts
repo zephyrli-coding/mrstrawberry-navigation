@@ -8,31 +8,25 @@ export interface UserResponse {
   created_at: string
 }
 
-export interface TokenResponse {
+export interface CallbackResponse {
   access_token: string
+  refresh_token: string
   token_type: string
+  expires_in: number
+  user: UserResponse
 }
 
 export const authApi = {
-  register(email: string, password: string, nickname?: string) {
-    return client.post<UserResponse>('/auth/register', { email, password, nickname })
-  },
-  login(email: string, password: string) {
-    return client.post<TokenResponse>('/auth/login', { email, password })
-  },
-  forgotPassword(email: string) {
-    return client.post('/auth/forgot-password', { email })
-  },
-  resetPassword(token: string, new_password: string) {
-    return client.post('/auth/reset-password', { token, new_password })
+  exchangeCode(code: string) {
+    return client.post<CallbackResponse>('/auth/callback', null, { params: { code } })
   },
   getMe() {
     return client.get<UserResponse>('/auth/me')
   },
-  changePassword(old_password: string, new_password: string) {
-    return client.post('/auth/change-password', { old_password, new_password })
-  },
   updateProfile(nickname: string) {
     return client.put<UserResponse>('/auth/me', null, { params: { nickname } })
+  },
+  logout() {
+    return client.post('/auth/logout')
   },
 }

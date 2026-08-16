@@ -71,36 +71,10 @@
         <!-- 修改密码 -->
         <section class="card">
           <h2 class="card__title">修改密码</h2>
-          <form @submit.prevent="handleChangePassword" class="form">
-            <BaseInput
-              label="当前密码"
-              v-model="form.oldPassword"
-              type="password"
-              placeholder="输入当前密码"
-              :error="errors.oldPassword"
-            />
-            <BaseInput
-              label="新密码"
-              v-model="form.newPassword"
-              type="password"
-              placeholder="至少6位"
-              :error="errors.newPassword"
-            />
-            <BaseInput
-              label="确认新密码"
-              v-model="form.confirmPassword"
-              type="password"
-              placeholder="再次输入新密码"
-              :error="errors.confirmPassword"
-            />
-
-            <div v-if="serverError" class="form__error">{{ serverError }}</div>
-            <div v-if="successMsg" class="form__success">{{ successMsg }}</div>
-
-            <div class="form__footer">
-              <BaseButton type="submit" :loading="loading">保存新密码</BaseButton>
-            </div>
-          </form>
+          <p class="backup-section__desc">密码管理已迁移到统一账号中心</p>
+          <BaseButton @click="goToAuthForgotPassword">
+            前往统一账号中心重置密码
+          </BaseButton>
         </section>
 
         <!-- 数据导入导出 -->
@@ -181,8 +155,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import { authApi } from '@/api/auth'
 import { exportData, importData, validateImportFile } from '@/api/exportImport'
+import { redirectToAuthForgotPassword } from '@/api/client'
 import Navbar from '@/components/Navbar.vue'
 import BaseInput from '@/components/BaseInput.vue'
 import BaseButton from '@/components/BaseButton.vue'
@@ -197,6 +171,10 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('zh-CN', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
+}
+
+function goToAuthForgotPassword() {
+  redirectToAuthForgotPassword()
 }
 
 // ── Nickname edit ─────────────────────────────────────────────────────────────
@@ -219,36 +197,6 @@ async function saveNickname() {
     editingNickname.value = false
   } catch (e: any) {
     alert(e.response?.data?.detail ?? '保存失败，请重试')
-  }
-}
-
-// ── Change password ───────────────────────────────────────────────────────────
-const form = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
-const errors = ref({ oldPassword: '', newPassword: '', confirmPassword: '' })
-const loading = ref(false)
-const serverError = ref('')
-const successMsg = ref('')
-
-async function handleChangePassword() {
-  errors.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
-  serverError.value = ''
-  successMsg.value = ''
-
-  if (!form.value.oldPassword) { errors.value.oldPassword = '请输入当前密码'; return }
-  if (form.value.newPassword.length < 6) { errors.value.newPassword = '新密码至少6位'; return }
-  if (form.value.newPassword !== form.value.confirmPassword) {
-    errors.value.confirmPassword = '两次密码不一致'; return
-  }
-
-  loading.value = true
-  try {
-    await authApi.changePassword(form.value.oldPassword, form.value.newPassword)
-    successMsg.value = '密码已修改成功'
-    form.value = { oldPassword: '', newPassword: '', confirmPassword: '' }
-  } catch (e: any) {
-    serverError.value = e.response?.data?.detail ?? '修改失败，请重试'
-  } finally {
-    loading.value = false
   }
 }
 

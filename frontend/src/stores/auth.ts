@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi, type UserResponse } from '@/api/auth'
+import { redirectToAuthLogin, redirectToGlobalLogout } from '@/api/client'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const user = ref<UserResponse | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
-  
+
   // 显示名称：优先使用昵称，其次是邮箱前缀
   const displayName = computed(() => {
     if (user.value?.nickname) return user.value.nickname
@@ -25,16 +26,21 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = res.data
   }
 
-  async function login(email: string, password: string) {
-    const res = await authApi.login(email, password)
+  async function handleCallback(code: string) {
+    const res = await authApi.exchangeCode(code)
     token.value = res.data.access_token
+    user.value = res.data.user
     localStorage.setItem('access_token', res.data.access_token)
   }
 
-  async function register(email: string, password: string, nickname?: string) {
-    await authApi.register(email, password, nickname)
+  function login() {
+    redirectToAuthLogin()
   }
-  
+
+  function register() {
+    redirectToAuthLogin()
+  }
+
   async function updateProfile(nickname: string) {
     const res = await authApi.updateProfile(nickname)
     user.value = res.data
@@ -44,18 +50,20 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null
     user.value = null
     localStorage.removeItem('access_token')
+    redirectToGlobalLogout()
   }
 
-  return { 
-    token, 
-    user, 
-    isAuthenticated, 
+  return {
+    token,
+    user,
+    isAuthenticated,
     displayName,
-    initFromStorage, 
-    fetchMe, 
-    login, 
-    register, 
+    initFromStorage,
+    fetchMe,
+    handleCallback,
+    login,
+    register,
     updateProfile,
-    logout 
+    logout,
   }
 })

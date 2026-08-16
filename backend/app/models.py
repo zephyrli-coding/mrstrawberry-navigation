@@ -8,8 +8,9 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    auth_user_id = Column(String(36), unique=True, index=True, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_pw = Column(String, nullable=False)
+    hashed_pw = Column(String, nullable=True)
     nickname = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
