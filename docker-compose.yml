@@ -4,8 +4,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
       args:
-        HTTP_PROXY: ${DOCKER_BUILD_HTTP_PROXY:-http://host.docker.internal:1087}
-        HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-http://host.docker.internal:1087}
+        HTTP_PROXY: ${DOCKER_BUILD_HTTP_PROXY:-}
+        HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-}
     container_name: navigation-site-backend
     restart: unless-stopped
     expose:
@@ -27,6 +27,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
     networks:
       - navigation-site-network
+      - compound-internal
 
   frontend:
     build:
@@ -44,7 +45,14 @@ services:
       - backend
     networks:
       - navigation-site-network
+      - compound-edge
 
 networks:
   navigation-site-network:
     driver: bridge
+  compound-internal:
+    name: compound-internal
+    external: true
+  compound-edge:
+    name: compound-edge
+    external: true
