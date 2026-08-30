@@ -48,8 +48,9 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore()
+  if (!auth.initialized && to.name !== 'auth-callback') await auth.fetchMe()
   if (to.meta.requiresAuth && !auth.isAuthenticated) return '/login'
   if (to.meta.guest && auth.isAuthenticated) return '/'
 })

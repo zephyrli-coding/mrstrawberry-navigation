@@ -4,10 +4,10 @@ import { authApi, type UserResponse } from '@/api/auth'
 import { redirectToAuthLogin, redirectToGlobalLogout } from '@/api/client'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(null)
   const user = ref<UserResponse | null>(null)
+  const initialized = ref(false)
 
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => !!user.value)
 
   // 显示名称：优先使用昵称，其次是邮箱前缀
   const displayName = computed(() => {
@@ -16,21 +16,21 @@ export const useAuthStore = defineStore('auth', () => {
     return ''
   })
 
-  function initFromStorage() {
-    const stored = localStorage.getItem('access_token')
-    if (stored) token.value = stored
-  }
-
   async function fetchMe() {
-    const res = await authApi.getMe()
-    user.value = res.data
+    try {
+      const res = await authApi.getMe()
+      user.value = res.data
+    } catch {
+      user.value = null
+    } finally {
+      initialized.value = true
+    }
   }
 
   async function handleCallback(code: string) {
     const res = await authApi.exchangeCode(code)
-    token.value = res.data.access_token
-    user.value = res.data.user
-    localStorage.setItem('access_token', res.data.access_token)
+    user.value = res.data
+    initialized.value = true
   }
 
   function login() {
@@ -46,19 +46,21 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = res.data
   }
 
-  function logout() {
-    token.value = null
-    user.value = null
-    localStorage.removeItem('access_token')
-    redirectToGlobalLogout()
+  async function logout() {
+    try {
+      await authApi.logout()
+    } finally {
+      user.value = null
+      initialized.value = true
+      redirectToGlobalLogout()
+    }
   }
 
   return {
-    token,
     user,
+    initialized,
     isAuthenticated,
     displayName,
-    initFromStorage,
     fetchMe,
     handleCallback,
     login,
