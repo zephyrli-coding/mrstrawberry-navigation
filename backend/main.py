@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -7,6 +7,7 @@ load_dotenv()
 
 from database import engine, Base
 from app.routers import auth, categories, bookmarks, export_import
+from app.auth import get_current_user
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -30,9 +31,10 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(categories.router)
-app.include_router(bookmarks.router)
-app.include_router(export_import.router)
+protected = [Depends(get_current_user)]
+app.include_router(categories.router, dependencies=protected)
+app.include_router(bookmarks.router, dependencies=protected)
+app.include_router(export_import.router, dependencies=protected)
 
 
 @app.get("/health")

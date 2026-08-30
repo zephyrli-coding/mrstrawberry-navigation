@@ -61,12 +61,16 @@ import axios from 'axios'
 const client = axios.create({
   baseURL: '/api',
   timeout: 15000,
+  withCredentials: true,
 })
 
 client.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  const method = (config.method || 'get').toUpperCase()
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+    const item = document.cookie
+      .split('; ')
+      .find((cookie) => cookie.startsWith('navigation_csrf='))
+    if (item) config.headers['X-CSRF-Token'] = decodeURIComponent(item.split('=')[1])
   }
   return config
 })
@@ -75,8 +79,7 @@ client.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('access_token')
-      redirectToAuthLogin()
+      if (window.location.pathname !== '/login') window.location.href = '/login'
     }
     return Promise.reject(err)
   }

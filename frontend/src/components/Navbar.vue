@@ -95,10 +95,9 @@ const displayInitial = computed(() => {
   return name.charAt(0).toUpperCase() || '?'
 })
 
-function handleLogout() {
+async function handleLogout() {
   menuOpen.value = false
-  auth.logout()
-  router.push('/login')
+  await auth.logout()
 }
 </script>
 
