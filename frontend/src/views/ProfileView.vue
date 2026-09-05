@@ -1,521 +1,507 @@
 <template>
-  <div class="layout">
-    <Navbar />
-
-    <div class="page">
-      <div class="page__inner">
-        <RouterLink to="/" class="back-link">
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          返回
-        </RouterLink>
-
-        <h1 class="page__title">个人中心</h1>
-
-        <!-- 账户信息 -->
-        <section class="card">
-          <h2 class="card__title">账户信息</h2>
-          <div v-if="auth.user" class="info-list">
-            <div class="info-row">
-              <span class="info-row__label">昵称</span>
-              <div class="info-row__edit">
-                <template v-if="editingNickname">
-                  <input
-                    v-model="nicknameForm"
-                    type="text"
-                    class="nickname-input"
-                    placeholder="设置昵称"
-                    @keyup.enter="saveNickname"
-                    @keyup.esc="cancelEditNickname"
-                  />
-                  <button class="icon-btn" @click="saveNickname" title="保存">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 8l4 4 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                  <button class="icon-btn" @click="cancelEditNickname" title="取消">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </template>
-                <template v-else>
-                  <span class="info-row__value">{{ auth.user.nickname || '未设置' }}</span>
-                  <button class="icon-btn" @click="startEditNickname" title="编辑">
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M11.5 2.5l2 2-9 9H2.5v-2l9-9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-                    </svg>
-                  </button>
-                </template>
-              </div>
-            </div>
-            <div class="info-row">
-              <span class="info-row__label">邮箱</span>
-              <span class="info-row__value">{{ auth.user.email }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-row__label">注册时间</span>
-              <span class="info-row__value">{{ formatDate(auth.user.created_at) }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-row__label">账户状态</span>
-              <span class="info-row__value info-row__value--active">正常</span>
-            </div>
-          </div>
-          <div v-else class="info-loading">
-            <span class="spinner" />
-          </div>
-        </section>
-
-        <!-- 修改密码 -->
-        <section class="card">
-          <h2 class="card__title">修改密码</h2>
-          <p class="backup-section__desc">密码管理已迁移到统一账号中心</p>
-          <BaseButton @click="goToAuthForgotPassword">
-            前往统一账号中心重置密码
-          </BaseButton>
-        </section>
-
-        <!-- 数据导入导出 -->
-        <section class="card">
-          <h2 class="card__title">数据备份</h2>
-          
-          <!-- 导出 -->
-          <div class="backup-section">
-            <h3 class="backup-section__title">导出数据</h3>
-            <p class="backup-section__desc">将您的所有分类和书签导出为 JSON 文件，可用于备份或迁移</p>
-            <BaseButton @click="handleExport" :loading="exportLoading">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-right: 6px;">
-                <path d="M8 12V2m0 10l-3-3m3 3l3-3M2 14h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              导出备份
-            </BaseButton>
-          </div>
-
-          <div class="backup-divider" />
-
-          <!-- 导入 -->
-          <div class="backup-section">
-            <h3 class="backup-section__title">导入数据</h3>
-            <p class="backup-section__desc">从 JSON 文件恢复数据，支持合并或替换现有数据</p>
-            
-            <div class="import-mode">
-              <label class="import-mode__option">
-                <input type="radio" v-model="importMode" value="merge" />
-                <span>合并模式</span>
-                <small>保留现有数据，同名分类合并书签</small>
-              </label>
-              <label class="import-mode__option">
-                <input type="radio" v-model="importMode" value="replace" />
-                <span>替换模式</span>
-                <small>清空现有数据后导入</small>
-              </label>
-            </div>
-
-            <div class="file-upload">
-              <input
-                ref="fileInput"
-                type="file"
-                accept=".json,application/json"
-                @change="handleFileChange"
-                class="file-upload__input"
-              />
-              <BaseButton @click="fileInput?.click()" :loading="importLoading" variant="secondary">
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="margin-right: 6px;">
-                  <path d="M8 4v10m0-10l-3 3m3-3l3 3M2 2h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                选择文件导入
-              </BaseButton>
-              <span v-if="selectedFile" class="file-upload__name">{{ selectedFile.name }}</span>
-            </div>
-
-            <div v-if="importResult" class="import-result" :class="{ 'import-result--error': importResult.error }">
-              <template v-if="importResult.error">
-                {{ importResult.error }}
-              </template>
-              <template v-else>
-                <p>导入成功！</p>
-                <ul>
-                  <li>新增分类: {{ importResult.imported_categories }} 个</li>
-                  <li>新增书签: {{ importResult.imported_bookmarks }} 个</li>
-                </ul>
-                <p v-if="importResult.errors" class="import-result__warn">
-                  警告: {{ importResult.errors.join('; ') }}
-                </p>
-              </template>
-            </div>
-          </div>
-        </section>
+  <AppShell title="个人设置与备份"
+    ><main class="settings">
+      <div class="page-head">
+        <p class="eyebrow">NAVIGATION / SETTINGS</p>
+        <h1>个人设置与备份</h1>
+        <p>管理你的显示名称，备份常用书签。</p>
       </div>
-    </div>
-  </div>
+      <p
+        v-if="feedback"
+        :class="['notice', failed ? 'error' : 'success']"
+        role="status"
+      >
+        {{ feedback }}
+      </p>
+      <section class="settings-card">
+        <div class="section-heading">
+          <AppIcon name="user" />
+          <div>
+            <h2>账户信息</h2>
+            <p>登录与安全设置由统一账号中心管理</p>
+          </div>
+        </div>
+        <dl v-if="auth.user">
+          <div>
+            <dt>昵称</dt>
+            <dd>
+              <form
+                v-if="editing"
+                class="nickname-form"
+                @submit.prevent="saveNickname"
+              >
+                <input
+                  ref="nicknameInput"
+                  v-model="nickname"
+                  aria-label="昵称"
+                  :disabled="saving"
+                  @keydown.esc="editing = false"
+                /><BaseButton type="submit" :loading="saving">保存</BaseButton
+                ><BaseButton
+                  variant="text"
+                  :disabled="saving"
+                  @click="editing = false"
+                  >取消</BaseButton
+                >
+              </form>
+              <div v-else class="nickname-value">
+                <span>{{ auth.user.nickname || '未设置' }}</span
+                ><button
+                  class="icon-button"
+                  aria-label="编辑昵称"
+                  @click="startEditing"
+                >
+                  <AppIcon name="edit" />
+                </button>
+              </div>
+            </dd>
+          </div>
+          <div>
+            <dt>邮箱</dt>
+            <dd>{{ auth.user.email }}</dd>
+          </div>
+          <div>
+            <dt>注册时间</dt>
+            <dd>{{ formatDate(auth.user.created_at) }}</dd>
+          </div>
+          <div>
+            <dt>账户状态</dt>
+            <dd>
+              <span class="status-badge">{{
+                auth.user.is_active ? '正常' : '已停用'
+              }}</span>
+            </dd>
+          </div>
+        </dl>
+        <p v-else role="status">正在读取账户信息…</p>
+      </section>
+      <section class="settings-card">
+        <div class="section-heading">
+          <AppIcon name="lock" />
+          <div>
+            <h2>账号安全</h2>
+            <p>在统一账号中心管理密码与登录会话。</p>
+          </div>
+        </div>
+        <div class="security-actions">
+          <a class="button-link" :href="`${AUTH_SERVICE_URL}/auth/profile`"
+            >打开统一账号中心<AppIcon name="arrow" /></a
+          ><BaseButton variant="secondary" @click="redirectToAuthForgotPassword"
+            >重置密码</BaseButton
+          >
+        </div>
+      </section>
+      <section class="settings-card" id="backup">
+        <div class="section-heading">
+          <AppIcon name="folder" />
+          <div>
+            <h2>书签备份</h2>
+            <p>JSON 文件可用于恢复或迁移你的分类书签。</p>
+          </div>
+        </div>
+        <div class="backup-grid">
+          <div>
+            <h3>导出数据</h3>
+            <p>下载当前账号的分类与分类内书签，保留现有排序。</p>
+            <p class="backup-limit">
+              当前备份格式仅包含分类内书签。请先把需要备份的未分类书签移入分类。
+            </p>
+            <BaseButton :loading="exportLoading" @click="handleExport"
+              >导出备份</BaseButton
+            >
+          </div>
+          <div>
+            <h3>导入数据</h3>
+            <p>选择备份文件，核对内容后再执行导入。</p>
+            <fieldset :disabled="importLoading">
+              <legend class="sr-only">导入模式</legend>
+              <label
+                ><input v-model="importMode" type="radio" value="merge" /><span
+                  >合并模式<small>保留已有数据，同网址书签会更新</small></span
+                ></label
+              ><label
+                ><input
+                  v-model="importMode"
+                  type="radio"
+                  value="replace"
+                /><span
+                  >替换模式<small>删除当前账号所有书签和分类后导入</small></span
+                ></label
+              >
+            </fieldset>
+            <input
+              ref="fileInput"
+              class="sr-only"
+              type="file"
+              accept=".json,application/json"
+              tabindex="-1"
+              aria-label="选择备份文件"
+              @change="selectFile"
+            /><BaseButton
+              variant="secondary"
+              :loading="importLoading"
+              @click="fileInput?.click()"
+              >选择文件导入</BaseButton
+            >
+            <p v-if="selectedFile" class="file-name">{{ selectedFile.name }}</p>
+          </div>
+        </div>
+        <div
+          v-if="importResult"
+          :class="['notice', importResult.error ? 'error' : 'success']"
+          role="status"
+        >
+          <template v-if="importResult.error">{{ importResult.error }}</template
+          ><template v-else
+            >导入完成：新增 {{ importResult.imported_categories }} 个分类、{{
+              importResult.imported_bookmarks
+            }}
+            个书签。
+            <p v-if="importResult.errors?.length">
+              部分内容未导入：{{ importResult.errors.join('；') }}
+            </p></template
+          >
+        </div>
+      </section>
+      <ConfirmModal
+        v-model="confirmOpen"
+        title="确认导入备份"
+        :message="importSummary"
+        :loading="importLoading"
+        :error="importError"
+        :confirm-label="
+          importMode === 'replace' ? '确认替换并导入' : '确认合并导入'
+        "
+        :danger="importMode === 'replace'"
+        @confirm="confirmImport"
+      /></main
+  ></AppShell>
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useBookmarksStore } from '@/stores/bookmarks'
 import { exportData, importData, validateImportFile } from '@/api/exportImport'
-import { redirectToAuthForgotPassword } from '@/api/client'
-import Navbar from '@/components/Navbar.vue'
-import BaseInput from '@/components/BaseInput.vue'
+import { AUTH_SERVICE_URL, redirectToAuthForgotPassword } from '@/api/client'
+import { errorMessage, safeWebUrl } from '@/utils/feedback'
+import AppShell from '@/components/AppShell.vue'
+import AppIcon from '@/components/AppIcon.vue'
 import BaseButton from '@/components/BaseButton.vue'
-
-const auth = useAuthStore()
-
-onMounted(() => {
-  if (!auth.user) auth.fetchMe()
-})
-
+import ConfirmModal from '@/components/ConfirmModal.vue'
+const auth = useAuthStore(),
+  store = useBookmarksStore()
+const feedback = ref(''),
+  failed = ref(false),
+  editing = ref(false),
+  nickname = ref(''),
+  nicknameInput = ref<HTMLInputElement | null>(null),
+  saving = ref(false)
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('zh-CN', {
-    year: 'numeric', month: 'long', day: 'numeric',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
   })
 }
-
-function goToAuthForgotPassword() {
-  redirectToAuthForgotPassword()
+async function startEditing() {
+  nickname.value = auth.user?.nickname || ''
+  editing.value = true
+  await nextTick()
+  nicknameInput.value?.focus()
 }
-
-// ── Nickname edit ─────────────────────────────────────────────────────────────
-const editingNickname = ref(false)
-const nicknameForm = ref('')
-
-function startEditNickname() {
-  nicknameForm.value = auth.user?.nickname || ''
-  editingNickname.value = true
-}
-
-function cancelEditNickname() {
-  editingNickname.value = false
-  nicknameForm.value = ''
-}
-
 async function saveNickname() {
+  if (saving.value) return
+  saving.value = true
+  feedback.value = ''
   try {
-    await auth.updateProfile(nicknameForm.value)
-    editingNickname.value = false
-  } catch (e: any) {
-    alert(e.response?.data?.detail ?? '保存失败，请重试')
-  }
-}
-
-// ── Export / Import ───────────────────────────────────────────────────────────
-const exportLoading = ref(false)
-const importLoading = ref(false)
-const importMode = ref<'merge' | 'replace'>('merge')
-const selectedFile = ref<File | null>(null)
-const fileInput = ref<HTMLInputElement | null>(null)
-const importResult = ref<{ error?: string; imported_categories?: number; imported_bookmarks?: number; errors?: string[] | null; success?: boolean; version?: string } | null>(null)
-
-function handleExport() {
-  exportLoading.value = true
-  try {
-    exportData()
+    await auth.updateProfile(nickname.value.trim())
+    editing.value = false
+    feedback.value = '昵称已保存'
+    failed.value = false
+  } catch (e) {
+    feedback.value = errorMessage(e, '昵称保存失败，请重试。')
+    failed.value = true
   } finally {
-    setTimeout(() => { exportLoading.value = false }, 500)
+    saving.value = false
   }
 }
-
-async function handleFileChange(e: Event) {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
+const exportLoading = ref(false),
+  importLoading = ref(false),
+  importMode = ref<'merge' | 'replace'>('merge'),
+  selectedFile = ref<File | null>(null),
+  fileInput = ref<HTMLInputElement | null>(null)
+const importResult = ref<{
+  error?: string
+  imported_categories?: number
+  imported_bookmarks?: number
+  errors?: string[] | null
+} | null>(null)
+const confirmOpen = ref(false),
+  importSummary = ref(''),
+  importError = ref('')
+async function handleExport() {
+  if (exportLoading.value) return
+  exportLoading.value = true
+  feedback.value = ''
+  try {
+    await exportData()
+    failed.value = false
+    feedback.value = '备份已下载，请检查下载文件。'
+  } catch (e) {
+    failed.value = true
+    feedback.value = errorMessage(e, '导出失败，请稍后重试。')
+  } finally {
+    exportLoading.value = false
+  }
+}
+async function selectFile(e: Event) {
+  const input = e.target as HTMLInputElement,
+    file = input.files?.[0]
+  input.value = ''
   if (!file) return
-
   selectedFile.value = file
   importResult.value = null
+  importError.value = ''
   importLoading.value = true
-
   try {
-    // 先验证文件
-    const validation = await validateImportFile(file)
-    if (!validation.valid) {
-      importResult.value = { error: `文件验证失败: ${validation.error}` }
-      return
+    const content = JSON.parse(await file.text())
+    if (!content?.data || !Array.isArray(content.data.categories))
+      throw new Error('备份必须包含 data.categories 数组。')
+    for (const cat of content.data.categories) {
+      if (
+        typeof cat?.name !== 'string' ||
+        !cat.name.trim() ||
+        !Array.isArray(cat.bookmarks)
+      )
+        throw new Error('分类必须包含名称和 bookmarks 数组。')
+      for (const b of cat.bookmarks)
+        if (
+          typeof b?.title !== 'string' ||
+          !b.title.trim() ||
+          typeof b.url !== 'string' ||
+          !safeWebUrl(b.url)
+        )
+          throw new Error('书签必须包含标题与有效的 http / https 网址。')
     }
-
-    // 执行导入
-    const result = await importData(file, importMode.value)
-    importResult.value = result
-    
-    // 清空文件选择
-    if (fileInput.value) fileInput.value.value = ''
-    selectedFile.value = null
+    const validation = await validateImportFile(file)
+    if (!validation.valid)
+      throw new Error(validation.error || '备份文件验证失败。')
+    importSummary.value = `文件「${file.name}」包含 ${validation.categories_count || 0} 个分类、${validation.bookmarks_count || 0} 个书签。${importMode.value === 'replace' ? '替换将删除你当前的全部分类和书签（包括未分类书签），建议先检查备份。' : '合并将保留现有数据，同网址书签的标题、描述、分类与顺序会更新。'}`
+    confirmOpen.value = true
   } catch (e: any) {
-    importResult.value = { 
-      error: e.response?.data?.detail ?? '导入失败，请检查文件格式' 
+    importResult.value = {
+      error: e.response
+        ? errorMessage(e, '文件验证失败，请重试。')
+        : e.message || '无法读取这个备份文件。',
     }
   } finally {
     importLoading.value = false
   }
 }
+async function confirmImport() {
+  if (!selectedFile.value || importLoading.value) return
+  importLoading.value = true
+  importError.value = ''
+  try {
+    importResult.value = await importData(selectedFile.value, importMode.value)
+    confirmOpen.value = false
+    selectedFile.value = null
+    await store.fetchAll()
+  } catch (e) {
+    importError.value = errorMessage(e, '导入失败，请重试。')
+  } finally {
+    importLoading.value = false
+  }
+}
 </script>
-
 <style scoped>
-.layout {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--color-surface-alt);
+.settings {
+  max-width: 1030px;
 }
-
-.page {
-  flex: 1;
-  padding: 40px 24px;
+.page-head {
+  margin-bottom: 26px;
 }
-
-.page__inner {
-  max-width: 560px;
-  margin: 0 auto;
+.page-head h1 {
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
 }
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--color-tertiary);
-  margin-bottom: 24px;
-  transition: color var(--transition);
+.page-head > p:last-child {
+  font-size: 12px;
+  color: var(--color-placeholder);
+  margin-top: 8px;
 }
-.back-link:hover { color: var(--color-heading); }
-
-.page__title {
-  font-size: 24px;
-  font-weight: 500;
-  color: var(--color-heading);
-  margin-bottom: 24px;
-}
-
-.card {
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  padding: 28px 32px;
-  margin-bottom: 16px;
-}
-
-.card__title {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--color-heading);
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-}
-
-.info-row__label {
-  color: var(--color-tertiary);
-}
-
-.info-row__value {
-  color: var(--color-heading);
-  font-weight: 500;
-}
-
-.info-row__value--active {
-  color: #2e7d32;
-}
-
-.info-row__edit {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nickname-input {
-  padding: 6px 10px;
-  font-size: 14px;
+.settings-card {
+  background: white;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-btn);
-  background: var(--color-surface);
-  color: var(--color-heading);
-  width: 150px;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
 }
-.nickname-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-tertiary);
-  padding: 4px;
-  border-radius: 4px;
+.section-heading {
   display: flex;
   align-items: center;
-  transition: color var(--transition);
+  gap: 12px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 20px;
 }
-.icon-btn:hover {
+.section-heading > svg {
   color: var(--color-primary);
 }
-
-.info-loading {
-  display: flex;
-  justify-content: center;
-  padding: 16px 0;
+.section-heading h2 {
+  font-size: 15px;
+  font-weight: 600;
 }
-
-.spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
+.section-heading p {
+  font-size: 11px;
+  color: var(--color-placeholder);
+  margin-top: 4px;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+dl {
+  display: grid;
+  gap: 15px;
 }
-
-.form__error {
+dl > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  align-items: center;
+  gap: 15px;
   font-size: 13px;
-  color: var(--color-error);
-  padding: 10px 12px;
-  background: #ffeaea;
-  border-radius: var(--radius-btn);
 }
-
-.form__success {
-  font-size: 13px;
-  color: #2e7d32;
-  padding: 10px 12px;
-  background: #e8f5e9;
-  border-radius: var(--radius-btn);
+dt {
+  color: var(--color-placeholder);
 }
-
-.form__footer {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 4px;
+dd {
+  overflow-wrap: anywhere;
 }
-
-/* Backup section */
-.backup-section {
-  margin-bottom: 20px;
-}
-.backup-section:last-child {
-  margin-bottom: 0;
-}
-
-.backup-section__title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-heading);
-  margin-bottom: 8px;
-}
-
-.backup-section__desc {
-  font-size: 13px;
-  color: var(--color-tertiary);
-  margin-bottom: 16px;
-  line-height: 1.5;
-}
-
-.backup-divider {
-  height: 1px;
-  background: var(--color-border);
-  margin: 24px 0;
-}
-
-/* Import mode */
-.import-mode {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 16px;
-  background: var(--color-surface-alt);
-  border-radius: var(--radius-btn);
-}
-
-.import-mode__option {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.import-mode__option input[type="radio"] {
-  margin-top: 2px;
-}
-
-.import-mode__option span {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-heading);
-}
-
-.import-mode__option small {
-  display: block;
-  font-size: 12px;
-  color: var(--color-tertiary);
-  margin-top: 2px;
-}
-
-/* File upload */
-.file-upload {
+.nickname-value {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
+}
+.nickname-form {
+  display: flex;
+  gap: 7px;
+  align-items: center;
   flex-wrap: wrap;
 }
-
-.file-upload__input {
-  display: none;
+.nickname-form input {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 7px;
+  padding: 10px 12px;
+  max-width: 100%;
+  width: 220px;
 }
-
-.file-upload__name {
+.status-badge {
+  font-size: 11px;
+  color: #258366;
+  background: #edf7f2;
+  border-radius: 5px;
+  padding: 4px 8px;
+}
+.security-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 7px;
   font-size: 13px;
-  color: var(--color-body);
 }
-
-/* Import result */
-.import-result {
-  margin-top: 16px;
-  padding: 12px 16px;
-  background: #e8f5e9;
-  border-radius: var(--radius-btn);
-  font-size: 13px;
-  color: #2e7d32;
+.button-link:hover {
+  background: var(--color-blue-soft);
 }
-
-.import-result--error {
-  background: #ffeaea;
-  color: var(--color-error);
+.backup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
 }
-
-.import-result ul {
-  margin: 8px 0;
-  padding-left: 20px;
+.backup-grid > div + div {
+  border-left: 1px solid var(--color-border);
+  padding-left: 30px;
 }
-
-.import-result li {
-  margin: 4px 0;
+.backup-grid h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 9px;
 }
-
-.import-result__warn {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0,0,0,0.1);
-  color: #f57c00;
+.backup-grid p {
+  font-size: 12px;
+  color: var(--color-placeholder);
+  margin-bottom: 16px;
+  line-height: 1.8;
+}
+.backup-grid .backup-limit {
+  background: #faf6ed;
+  color: #896831;
+  padding: 12px;
+  border-radius: 7px;
+}
+fieldset {
+  border: 0;
+  display: grid;
+  gap: 13px;
+  padding: 14px;
+  background: var(--color-surface-alt);
+  border-radius: 7px;
+  margin: 14px 0;
+}
+fieldset label {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  font-size: 12px;
+}
+fieldset input {
+  margin-top: 4px;
+}
+fieldset small {
+  display: block;
+  font-size: 11px;
+  color: var(--color-placeholder);
+  margin-top: 3px;
+}
+.file-name {
+  overflow-wrap: anywhere;
+  margin-top: 10px;
+}
+.notice {
+  margin: 16px 0;
+}
+@media (max-width: 1000px) {
+  .backup-grid {
+    grid-template-columns: 1fr;
+  }
+  .backup-grid > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--color-border);
+    padding: 24px 0 0;
+  }
+}
+@media (max-width: 740px) {
+  .settings-card {
+    padding: 18px;
+  }
+  .page-head h1 {
+    font-size: 25px;
+  }
+  dl > div {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .nickname-form {
+    grid-column: 1/-1;
+  }
+  .nickname-form input {
+    width: 100%;
+  }
 }
 </style>

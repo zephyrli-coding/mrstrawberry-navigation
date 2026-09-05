@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { rememberReturnTo } from '@/utils/returnTo'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -51,7 +52,10 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (!auth.initialized && to.name !== 'auth-callback') await auth.fetchMe()
-  if (to.meta.requiresAuth && !auth.isAuthenticated) return '/login'
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    rememberReturnTo(to.fullPath)
+    return '/login'
+  }
   if (to.meta.guest && auth.isAuthenticated) return '/'
 })
 

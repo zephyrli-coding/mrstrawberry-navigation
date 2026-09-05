@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-05T06:37:54.470Z",
+  "environment": "http://localhost:20261",
+  "browser": "Persistent CDP Chrome 9223; dedicated contexts",
+  "checks": [
+    "real OAuth login; unverified active user permitted",
+    "replace import preview, cancel, confirmation and persistence",
+    "category create, duplicate validation and rename",
+    "bookmark validation, failed save retains draft and retry",
+    "bookmark edit and category deletion retain bookmark after reload",
+    "bookmark deletion cancel, failure and retry",
+    "search, empty results, clear and keyboard shortcut",
+    "category filtering and deep-link reload",
+    "keyboard bookmark order persisted through real batch API",
+    "bookmark drag order persisted",
+    "category keyboard order and drag order persisted",
+    "title/recent sorting and all three view modes survive reload",
+    "safe external link opens user-requested tab",
+    "merge import, invalid file and real exported JSON",
+    "nickname save and account/security entries",
+    "loading failure and retry",
+    "desktop and phone layouts, long names, category scrolling and modal keyboard",
+    "second real user isolation and CSRF protection",
+    "expired local session, explicit re-login and deep-link return",
+    "logout and invalid callback feedback",
+    "registration and password entry routes keep real Auth redirects"
+  ],
+  "uncovered": [
+    "Favorite/pin is absent from current backend and was explicitly excluded from this UI scope.",
+    "MFA login is not covered. Session expiration is exercised by expiring only this test account BFF session in the isolated Navigation Redis."
+  ],
+  "runtimeErrors": []
+}

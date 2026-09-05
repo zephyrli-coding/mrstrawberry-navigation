@@ -8,7 +8,7 @@ export async function exportData(): Promise<void> {
   const response = await client.get('/export-import/export', {
     responseType: 'blob',
   })
-  
+
   // 从响应头获取文件名，或使用默认名称
   const contentDisposition = response.headers['content-disposition']
   let filename = 'backup.json'
@@ -16,7 +16,7 @@ export async function exportData(): Promise<void> {
     const match = contentDisposition.match(/filename="?([^"]+)"?/)
     if (match) filename = match[1]
   }
-  
+
   // 创建下载链接
   const blob = new Blob([response.data], { type: 'application/json' })
   const url = window.URL.createObjectURL(blob)
@@ -34,7 +34,10 @@ export async function exportData(): Promise<void> {
  * @param file JSON 文件
  * @param mode 'merge' | 'replace'
  */
-export async function importData(file: File, mode: 'merge' | 'replace' = 'merge'): Promise<{
+export async function importData(
+  file: File,
+  mode: 'merge' | 'replace' = 'merge',
+): Promise<{
   success: boolean
   imported_categories: number
   imported_bookmarks: number
@@ -43,9 +46,9 @@ export async function importData(file: File, mode: 'merge' | 'replace' = 'merge'
 }> {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('mode', mode)
 
   const { data } = await client.post('/export-import/import', formData, {
+    params: { mode },
     headers: {
       'Content-Type': 'multipart/form-data',
     },

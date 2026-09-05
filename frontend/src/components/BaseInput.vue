@@ -1,19 +1,29 @@
 <template>
   <div class="field">
-    <label v-if="label" class="field__label">{{ label }}</label>
-    <input
+    <label v-if="label" :for="inputId">{{ label }}</label
+    ><input
+      :id="inputId"
       v-bind="$attrs"
-      :type="type"
+      :type="type || 'text'"
       :value="modelValue"
       :placeholder="placeholder"
-      :class="['field__input', { 'field__input--error': error }]"
-      @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-    />
-    <span v-if="error" class="field__error">{{ error }}</span>
+      :aria-invalid="!!error"
+      :aria-describedby="error ? `${inputId}-error` : undefined"
+      @input="
+        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
+      "
+    /><span
+      v-if="error"
+      :id="`${inputId}-error`"
+      class="field-error"
+      role="alert"
+      >{{ error }}</span
+    >
   </div>
 </template>
-
 <script setup lang="ts">
+import { useId } from 'vue'
+defineOptions({ inheritAttrs: false })
 defineProps<{
   label?: string
   modelValue: string
@@ -22,46 +32,39 @@ defineProps<{
   error?: string
 }>()
 defineEmits<{ 'update:modelValue': [value: string] }>()
+const inputId = useId()
 </script>
-
 <style scoped>
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
-
-.field__label {
-  font-size: 13px;
+.field label {
+  font-size: 12px;
   font-weight: 500;
   color: var(--color-heading);
 }
-
-.field__input {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--color-border-subtle);
-  padding: 10px 0;
-  font-size: 14px;
-  color: var(--color-heading);
-  outline: none;
-  transition: border-color var(--transition);
+input {
   width: 100%;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 7px;
+  background: white;
+  padding: 10px 12px;
+  color: var(--color-heading);
+  font: inherit;
+  min-height: 40px;
 }
-
-.field__input::placeholder {
+input::placeholder {
   color: var(--color-placeholder);
 }
-
-.field__input:focus {
-  border-bottom-color: var(--color-primary);
+input:focus {
+  border-color: var(--color-primary);
 }
-
-.field__input--error {
-  border-bottom-color: var(--color-error);
+input[aria-invalid='true'] {
+  border-color: var(--color-error);
 }
-
-.field__error {
+.field-error {
   font-size: 12px;
   color: var(--color-error);
 }

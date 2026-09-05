@@ -1,113 +1,107 @@
 <template>
-  <aside :class="['panel', { 'panel--collapsed': collapsed }]">
-    <div class="panel__header">
-      <span v-if="!collapsed" class="panel__title">分类</span>
-      <div class="panel__actions">
-        <!-- 展开/收起按钮 -->
+  <section class="categories" aria-label="分类管理">
+    <div class="heading">
+      <button
+        class="heading-label"
+        :aria-expanded="!collapsed"
+        @click="collapsed = !collapsed"
+      >
+        <AppIcon :name="collapsed ? 'arrow' : 'down'" />我的分类
+      </button>
+      <div>
         <button
-          class="panel__collapse-btn"
-          @click="toggleCollapse"
-          :title="collapsed ? '展开' : '收起'"
+          class="icon-button"
+          :aria-pressed="sortMode"
+          aria-label="排序分类"
+          title="排序分类"
+          @click="toggleSortMode"
         >
-          <svg v-if="!collapsed" width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M11 2L6 8l5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M5 2l5 6-5 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <AppIcon name="list" /></button
+        ><button
+          class="icon-button"
+          aria-label="新建分类"
+          title="新建分类"
+          @click="$emit('add')"
+        >
+          <AppIcon name="plus" />
         </button>
-        <template v-if="!collapsed">
-          <button
-            :class="['panel__sort-btn', { 'panel__sort-btn--active': sortMode }]"
-            @click="toggleSortMode"
-            :title="sortMode ? '完成排序' : '排序分类'"
-          >
-            <svg v-if="!sortMode" width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M2 7h12M2 10h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              <path d="M11 11l2 2 2-2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M2 7h12M2 10h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
-              <path d="M11 15l2-2 2 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </button>
-          <button class="panel__add" @click="$emit('add')" title="新建分类">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </template>
       </div>
     </div>
-
-    <!-- 正常模式：简洁列表 -->
-    <ul v-if="!collapsed && !sortMode" class="panel__list">
-      <li>
-        <button
-          :class="['panel__item', { 'panel__item--active': activeId === null }]"
-          @click="$emit('select', null)"
+    <template v-if="!collapsed">
+      <p v-if="sortMode" class="hint">拖动分类，或用上下箭头排序</p>
+      <ul ref="list" :key="revision" class="category-list">
+        <li
+          v-for="(cat, index) in categories"
+          :key="cat.id"
+          :data-id="cat.id"
+          :class="['category-row', { active: activeId === cat.id }]"
         >
-          全部
-        </button>
-      </li>
-      <li v-for="cat in categories" :key="cat.id" class="panel__row">
-        <button
-          :class="['panel__item', { 'panel__item--active': activeId === cat.id }]"
-          @click="$emit('select', cat.id)"
-        >
-          {{ cat.name }}
-        </button>
-        <div class="panel__row-actions">
-          <button class="panel__icon-btn" @click="$emit('edit', cat)" title="编辑">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M11.5 2.5l2 2-9 9H2.5v-2l9-9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-            </svg>
+          <button
+            v-if="sortMode"
+            class="icon-button drag-handle"
+            :aria-label="`拖动分类 ${cat.name}`"
+            tabindex="-1"
+          >
+            <AppIcon name="drag" />
           </button>
-          <button class="panel__icon-btn panel__icon-btn--danger" @click="$emit('delete', cat)" title="删除">
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+          <button
+            class="category-name"
+            :title="cat.name"
+            :aria-current="activeId === cat.id ? 'page' : undefined"
+            @click="$emit('select', cat.id)"
+          >
+            <AppIcon v-if="!sortMode" name="folder" /><span>{{
+              cat.name
+            }}</span>
           </button>
-        </div>
-      </li>
-    </ul>
-
-    <!-- 排序模式：整个区域可拖拽 -->
-    <ul v-else-if="!collapsed && sortMode" ref="sortListRef" class="panel__list panel__list--sort">
-      <li class="panel__tip">拖拽调整顺序</li>
-      <li
-        v-for="cat in categories"
-        :key="cat.id"
-        :data-id="cat.id"
-        class="panel__sort-item"
-        title="拖拽排序"
-      >
-        <div class="panel__drag-indicator">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <circle cx="5" cy="4" r="1.5" fill="currentColor"/>
-            <circle cx="11" cy="4" r="1.5" fill="currentColor"/>
-            <circle cx="5" cy="8" r="1.5" fill="currentColor"/>
-            <circle cx="11" cy="8" r="1.5" fill="currentColor"/>
-            <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
-            <circle cx="11" cy="12" r="1.5" fill="currentColor"/>
-          </svg>
-        </div>
-        <span class="panel__sort-name">{{ cat.name }}</span>
-      </li>
-    </ul>
-  </aside>
+          <div class="row-actions">
+            <template v-if="sortMode"
+              ><button
+                class="icon-button"
+                :disabled="index === 0 || busy"
+                :aria-label="`上移分类 ${cat.name}`"
+                @click="move(index, -1)"
+              >
+                <AppIcon name="up" /></button
+              ><button
+                class="icon-button"
+                :disabled="index === categories.length - 1 || busy"
+                :aria-label="`下移分类 ${cat.name}`"
+                @click="move(index, 1)"
+              >
+                <AppIcon name="down" /></button
+            ></template>
+            <template v-else
+              ><button
+                class="icon-button"
+                :aria-label="`编辑分类 ${cat.name}`"
+                @click="$emit('edit', cat)"
+              >
+                <AppIcon name="edit" /></button
+              ><button
+                class="icon-button danger"
+                :aria-label="`删除分类 ${cat.name}`"
+                @click="$emit('delete', cat)"
+              >
+                <AppIcon name="trash" /></button
+            ></template>
+          </div>
+        </li>
+      </ul>
+      <p v-if="!categories.length" class="hint">还没有分类，点击 + 新建</p>
+    </template>
+  </section>
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import Sortable from 'sortablejs'
+import AppIcon from './AppIcon.vue'
 import type { Category } from '@/api/categories'
-
 const props = defineProps<{
   categories: Category[]
   activeId: number | null
+  busy?: boolean
 }>()
-
 const emit = defineEmits<{
   select: [id: number | null]
   add: []
@@ -115,231 +109,156 @@ const emit = defineEmits<{
   delete: [cat: Category]
   sort: [ids: number[]]
 }>()
-
-// 展开/收起状态
-const collapsed = ref(false)
-const sortMode = ref(false)
-const sortListRef = ref<HTMLElement | null>(null)
+const collapsed = ref(false),
+  sortMode = ref(false),
+  list = ref<HTMLElement | null>(null),
+  revision = ref(0)
 let sortable: Sortable | null = null
-
-function toggleCollapse() {
-  collapsed.value = !collapsed.value
-  // 收起时切换到全部分类
-  if (collapsed.value) {
-    emit('select', null)
-    // 收起时退出排序模式
-    if (sortMode.value) {
-      sortMode.value = false
-      if (sortable) {
-        sortable.destroy()
-        sortable = null
-      }
-    }
-  }
-}
-
 function toggleSortMode() {
   sortMode.value = !sortMode.value
-  if (sortMode.value) {
-    nextTick(() => initSortable())
-  } else if (sortable) {
-    sortable.destroy()
+  collapsed.value = false
+}
+function move(index: number, direction: number) {
+  const ids = props.categories.map((c) => c.id)
+  const [id] = ids.splice(index, 1)
+  ids.splice(index + direction, 0, id)
+  emit('sort', ids)
+}
+watch(
+  () => [
+    sortMode.value,
+    collapsed.value,
+    props.categories,
+    props.busy,
+    revision.value,
+  ],
+  async () => {
+    sortable?.destroy()
     sortable = null
-  }
-}
-
-function initSortable() {
-  if (!sortListRef.value) return
-
-  sortable = new Sortable(sortListRef.value, {
-    animation: 150,
-    ghostClass: 'panel__sort-item--ghost',
-    chosenClass: 'panel__sort-item--chosen',
-    dragClass: 'panel__sort-item--drag',
-    onEnd: (evt) => {
-      if (evt.oldIndex === evt.newIndex) return
-      
-      const items = sortListRef.value?.querySelectorAll('.panel__sort-item')
-      if (items) {
-        const ids = Array.from(items).map(el => Number(el.getAttribute('data-id')))
-        emit('sort', ids)
-      }
-    },
-  })
-}
-
-onMounted(() => {
-  if (sortMode.value) {
-    initSortable()
-  }
-})
+    await nextTick()
+    if (list.value && sortMode.value && !props.busy)
+      sortable = new Sortable(list.value, {
+        animation: 150,
+        handle: '.drag-handle',
+        draggable: '.category-row',
+        ghostClass: 'sort-ghost',
+        onEnd: (evt) => {
+          if (evt.oldIndex === evt.newIndex) return
+          const ids = Array.from(
+            list.value!.querySelectorAll<HTMLElement>('[data-id]'),
+          ).map((el) => Number(el.dataset.id))
+          revision.value++ // Restore Vue's DOM before applying the persisted order.
+          emit('sort', ids)
+        },
+      })
+  },
+  { flush: 'post' },
+)
+onUnmounted(() => sortable?.destroy())
 </script>
-
 <style scoped>
-.panel {
-  width: 220px;
-  flex-shrink: 0;
-  padding: 8px 0;
-  transition: width 0.2s ease;
-}
-
-.panel--collapsed {
-  width: 60px;
-}
-
-.panel__header {
+.heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px 12px;
-}
-
-.panel--collapsed .panel__header {
-  justify-content: center;
-  padding: 8px 8px 12px;
-}
-
-.panel__title {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-placeholder);
-}
-
-.panel__actions {
-  display: flex;
-  align-items: center;
+  padding: 0 1px 8px 8px;
   gap: 4px;
 }
-
-.panel--collapsed .panel__actions {
-  justify-content: center;
-}
-
-.panel__add,
-.panel__sort-btn,
-.panel__collapse-btn {
-  color: var(--color-tertiary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all var(--transition);
-  display: flex;
-}
-.panel__add:hover,
-.panel__sort-btn:hover,
-.panel__collapse-btn:hover {
-  color: var(--color-primary);
-  background: var(--color-surface-alt);
-}
-
-.panel__sort-btn--active {
-  color: var(--color-primary) !important;
-  background: rgba(62, 106, 225, 0.1) !important;
-}
-
-.panel__list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.panel__tip {
-  padding: 8px 16px;
-  font-size: 12px;
-  color: var(--color-placeholder);
-  text-align: center;
-}
-
-.panel__row {
+.heading-label {
   display: flex;
   align-items: center;
+  gap: 5px;
+  color: var(--color-placeholder);
+  font-size: 11px;
+  white-space: nowrap;
 }
-
-.panel__item {
+.heading-label svg {
+  width: 12px;
+  height: 12px;
+}
+.heading > div {
+  display: flex;
+}
+.heading .icon-button {
+  width: 27px;
+  height: 28px;
+}
+.heading .icon-button svg {
+  width: 15px;
+  height: 15px;
+}
+.category-list {
+  list-style: none;
+  display: grid;
+  gap: 3px;
+}
+.category-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border-radius: 7px;
+  min-height: 40px;
+}
+.category-row.active {
+  background: var(--color-blue-soft);
+  color: var(--color-primary);
+}
+.category-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 4px 10px 12px;
+  min-width: 0;
   flex: 1;
   text-align: left;
-  padding: 8px 16px;
-  font-size: 14px;
-  color: var(--color-body);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-btn);
-  transition: background-color var(--transition), color var(--transition);
+  font-size: 12px;
 }
-.panel__item:hover { background: var(--color-surface-alt); }
-.panel__item--active {
-  background: var(--color-surface-alt);
-  color: var(--color-heading);
-  font-weight: 500;
+.category-name svg {
+  width: 16px;
+  height: 16px;
 }
-
-.panel__row-actions {
-  display: none;
-  gap: 2px;
-  padding-right: 8px;
+.category-name span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-.panel__row:hover .panel__row-actions { display: flex; }
-
-.panel__icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
+.row-actions {
+  display: flex;
+  flex-shrink: 0;
+}
+.row-actions .icon-button {
+  width: 25px;
+  height: 30px;
+}
+.row-actions svg {
+  width: 13px;
+  height: 13px;
+}
+.row-actions {
+  opacity: 0;
+}
+.category-row:hover .row-actions,
+.category-row:focus-within .row-actions {
+  opacity: 1;
+}
+.category-row:hover {
+  background: #eef2f7;
+}
+.hint {
+  font-size: 11px;
   color: var(--color-placeholder);
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  transition: color var(--transition);
+  padding: 8px 10px;
 }
-.panel__icon-btn:hover { color: var(--color-body); }
-.panel__icon-btn--danger:hover { color: var(--color-error); }
-
-/* Sort mode styles */
-.panel__sort-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  background: var(--color-surface);
-  border-radius: var(--radius-btn);
+.drag-handle {
+  width: 20px;
   cursor: grab;
-  transition: background-color var(--transition);
-  margin-bottom: 4px;
 }
-.panel__sort-item:hover {
-  background: var(--color-surface-alt);
+.sort-ghost {
+  opacity: 0.35;
 }
-.panel__sort-item:active {
-  cursor: grabbing;
-}
-
-.panel__drag-indicator {
-  color: var(--color-placeholder);
-  margin-right: 10px;
-  display: flex;
-  align-items: center;
-}
-
-.panel__sort-name {
-  flex: 1;
-  font-size: 14px;
-  color: var(--color-body);
-}
-
-/* Sortable drag styles */
-.panel__sort-item--ghost {
-  opacity: 0.4;
-  background: var(--color-primary) !important;
-}
-.panel__sort-item--chosen {
-  background: var(--color-surface-alt);
-}
-.panel__sort-item--drag {
-  opacity: 0.9;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+@media (hover: none) {
+  .row-actions {
+    opacity: 1;
+  }
 }
 </style>

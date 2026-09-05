@@ -1,0 +1,21 @@
+# Navigation UI local acceptance only. Reuses shared Auth; isolates business data.
+services:
+  backend:
+    image: navigation-ui:backend
+    container_name: navigation-ui-backend
+    volumes:
+      - navigation_ui_data:/app/data
+    networks:
+      navigation-site-network:
+        aliases: [navigation-site-backend]
+      compound-internal: {}
+    environment:
+      AUTH_SERVICE_URL: http://auth-nginx
+      AUTH_SERVICE_JWKS_URL: http://auth-nginx/.well-known/jwks.json
+  session-redis:
+    container_name: navigation-ui-redis
+  frontend:
+    image: navigation-ui:frontend
+    container_name: navigation-ui-frontend
+volumes:
+  navigation_ui_data:

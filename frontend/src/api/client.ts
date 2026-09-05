@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
-const AUTH_SERVICE_URL = import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:20263'
+const AUTH_SERVICE_URL =
+  import.meta.env.VITE_AUTH_SERVICE_URL || 'http://localhost:20263'
 const AUTH_CLIENT_ID = import.meta.env.VITE_AUTH_CLIENT_ID || 'navigation'
 
 function getRedirectUri(): string {
@@ -10,7 +11,9 @@ function getRedirectUri(): string {
 function createOAuthState(): string {
   const bytes = new Uint8Array(24)
   crypto.getRandomValues(bytes)
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join(
+    '',
+  )
 }
 
 function storeOAuthState(state: string) {
@@ -19,7 +22,7 @@ function storeOAuthState(state: string) {
   localStorage.setItem('oauth_state', state)
 }
 
-export function redirectToAuthLogin() {
+export function redirectToAuthPage(path = 'login') {
   const state = createOAuthState()
   storeOAuthState(state)
   const params = new URLSearchParams({
@@ -28,7 +31,11 @@ export function redirectToAuthLogin() {
     redirect_uri: getRedirectUri(),
     state,
   })
-  window.location.href = `${AUTH_SERVICE_URL}/auth/login?${params.toString()}`
+  window.location.href = `${AUTH_SERVICE_URL}/auth/${path}?${params.toString()}`
+}
+
+export function redirectToAuthLogin() {
+  redirectToAuthPage('login')
 }
 
 export function redirectToAuthForgotPassword() {
@@ -57,6 +64,7 @@ export function redirectToGlobalLogout() {
 }
 
 import axios from 'axios'
+import { rememberReturnTo } from '@/utils/returnTo'
 
 const client = axios.create({
   baseURL: '/api',
@@ -70,7 +78,8 @@ client.interceptors.request.use((config) => {
     const item = document.cookie
       .split('; ')
       .find((cookie) => cookie.startsWith('navigation_csrf='))
-    if (item) config.headers['X-CSRF-Token'] = decodeURIComponent(item.split('=')[1])
+    if (item)
+      config.headers['X-CSRF-Token'] = decodeURIComponent(item.split('=')[1])
   }
   return config
 })
@@ -79,10 +88,24 @@ client.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      if (window.location.pathname !== '/login') window.location.href = '/login'
+      // A first visit has no prior BFF CSRF cookie. Let the router start normal
+      // login, while an existing session failure gets an explicit expiry state.
+      const hadSession = document.cookie
+        .split('; ')
+        .some((cookie) => cookie.startsWith('navigation_csrf='))
+      if (err.config?.url === '/auth/me' && !hadSession)
+        return Promise.reject(err)
+      if (!['/login', '/auth/callback'].includes(window.location.pathname)) {
+        rememberReturnTo(
+          window.location.pathname +
+            window.location.search +
+            window.location.hash,
+        )
+        window.location.href = '/login?expired=1'
+      }
     }
     return Promise.reject(err)
-  }
+  },
 )
 
 export default client

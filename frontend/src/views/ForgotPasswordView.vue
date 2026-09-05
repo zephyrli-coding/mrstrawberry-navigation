@@ -11,30 +11,21 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { AUTH_SERVICE_URL, AUTH_CLIENT_ID, getRedirectUri } from '@/api/client'
-
+import { onMounted, onUnmounted, ref } from 'vue'
+import { redirectToAuthPage } from '@/api/client'
 const countdown = ref(3)
-
+let timer: ReturnType<typeof setInterval>
 function goToAuth() {
-  const params = new URLSearchParams({
-    client_id: AUTH_CLIENT_ID,
-    response_type: 'code',
-    redirect_uri: getRedirectUri(),
-    state: Math.random().toString(36).substring(2),
-  })
-  window.location.href = `${AUTH_SERVICE_URL}/auth/forgot-password?${params.toString()}`
+  clearInterval(timer)
+  redirectToAuthPage('forgot-password')
 }
-
 onMounted(() => {
-  const timer = setInterval(() => {
+  timer = setInterval(() => {
     countdown.value--
-    if (countdown.value <= 0) {
-      clearInterval(timer)
-      goToAuth()
-    }
+    if (countdown.value <= 0) goToAuth()
   }, 1000)
 })
+onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>

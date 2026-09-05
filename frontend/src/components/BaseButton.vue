@@ -1,7 +1,11 @@
 <template>
   <button
     :type="type"
-    :class="['btn', `btn--${variant}`, { 'btn--full': full, 'btn--loading': loading }]"
+    :class="[
+      'btn',
+      `btn--${variant}`,
+      { 'btn--full': full, 'btn--loading': loading },
+    ]"
     :disabled="loading || disabled"
   >
     <span v-if="loading" class="btn__spinner" />
@@ -10,13 +14,16 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  variant?: 'primary' | 'secondary' | 'text' | 'danger'
-  type?: 'button' | 'submit'
-  loading?: boolean
-  disabled?: boolean
-  full?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    variant?: 'primary' | 'secondary' | 'text' | 'danger'
+    type?: 'button' | 'submit'
+    loading?: boolean
+    disabled?: boolean
+    full?: boolean
+  }>(),
+  { variant: 'primary', type: 'button' },
+)
 </script>
 
 <style scoped>
@@ -32,8 +39,11 @@ defineProps<{
   font-weight: 500;
   font-family: var(--font-family);
   cursor: pointer;
-  border: 3px solid transparent;
-  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+  border: 1px solid transparent;
+  transition:
+    background-color var(--transition),
+    color var(--transition),
+    border-color var(--transition);
   white-space: nowrap;
 }
 
@@ -84,7 +94,7 @@ defineProps<{
 .btn__spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255,255,255,0.4);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -92,11 +102,13 @@ defineProps<{
 
 .btn--secondary .btn__spinner,
 .btn--text .btn__spinner {
-  border-color: rgba(0,0,0,0.2);
+  border-color: rgba(0, 0, 0, 0.2);
   border-top-color: var(--color-body);
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
