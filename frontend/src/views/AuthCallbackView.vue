@@ -3,7 +3,7 @@
     <div class="auth-card">
       <h1 class="auth-card__title">{{ title }}</h1>
       <p class="auth-card__sub">{{ message }}</p>
-      <div v-if="error" class="auth-form__error">{{ error }}</div>
+      <div v-if="error" class="auth-form__error" role="alert">{{ error }}</div>
       <div v-if="error" class="auth-links">
         <a href="#" @click.prevent="auth.login" class="auth-link">返回登录</a>
       </div>
@@ -15,6 +15,8 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { consumeReturnTo } from '@/utils/returnTo'
+import { errorMessage } from '@/utils/feedback'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,11 +49,11 @@ onMounted(async () => {
     await auth.handleCallback(code)
     title.value = '登录成功'
     message.value = '正在进入导航站...'
-    router.push('/')
+    router.replace(consumeReturnTo())
   } catch (e: any) {
     title.value = '登录失败'
     message.value = ''
-    error.value = e.response?.data?.detail ?? '认证失败，请重试'
+    error.value = errorMessage(e, '认证失败，请重试')
   }
 })
 </script>

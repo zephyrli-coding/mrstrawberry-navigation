@@ -1,188 +1,290 @@
 <template>
-  <!-- 简化模式：纯文字链接 -->
-  <template v-if="simple">
-    <a 
-      :href="bookmark.url" 
-      target="_blank" 
-      rel="noopener noreferrer" 
-      class="simple-link"
-      :data-id="bookmark.id"
-    >
-      {{ bookmark.title }}
-    </a>
-  </template>
-  
-  <!-- 正常模式：卡片 -->
-  <div v-else class="card bookmark-card" :data-id="bookmark.id">
-    <a :href="bookmark.url" target="_blank" rel="noopener noreferrer" class="card__link">
-      <img
-        class="card__favicon"
-        :src="faviconUrl"
-        :alt="bookmark.title"
-        @error="onFaviconError"
-      />
-      <div class="card__info">
-        <span class="card__title">{{ bookmark.title }}</span>
-        <span class="card__url">{{ displayUrl }}</span>
-      </div>
-    </a>
-    <div class="card__actions">
-      <button class="card__icon-btn" @click="$emit('edit', bookmark)" title="编辑">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <path d="M11.5 2.5l2 2-9 9H2.5v-2l9-9z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
-        </svg>
-      </button>
-      <button class="card__icon-btn card__icon-btn--danger" @click="$emit('delete', bookmark)" title="删除">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-          <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5M3 4l1 10h8l1-10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+  <article
+    :class="['bookmark-card', `bookmark-card--${mode}`]"
+    :data-id="bookmark.id"
+  >
+    <div class="card-top">
+      <span v-if="mode !== 'simple'" class="favicon"
+        ><img
+          v-if="faviconUrl && !faviconError"
+          :src="faviconUrl"
+          alt=""
+          loading="lazy"
+          referrerpolicy="no-referrer"
+          @error="faviconError = true"
+        /><span v-else>{{
+          bookmark.title.slice(0, 1).toUpperCase()
+        }}</span></span
+      ><a
+        v-if="safeUrl"
+        :href="safeUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="card-title"
+        :title="bookmark.title"
+        >{{ bookmark.title }}</a
+      ><span v-else class="card-title" :title="bookmark.title">{{
+        bookmark.title
+      }}</span
+      ><AppIcon v-if="mode === 'card'" class="open-icon" name="arrow" />
     </div>
-  </div>
+    <p
+      v-if="mode !== 'simple'"
+      class="card-description"
+      :title="bookmark.description || ''"
+    >
+      {{ bookmark.description || '暂无描述' }}
+    </p>
+    <div class="card-bottom">
+      <span v-if="mode !== 'simple'" class="card-host" :title="bookmark.url">{{
+        safeUrl ? displayUrl : '网址不可打开，请编辑为 http / https'
+      }}</span>
+      <div class="card-actions">
+        <template v-if="sortable"
+          ><button
+            class="icon-button drag-handle"
+            tabindex="-1"
+            :aria-label="`拖动书签 ${bookmark.title}`"
+            title="拖动排序"
+          >
+            <AppIcon name="drag" /></button
+          ><button
+            class="icon-button"
+            :disabled="first || busy"
+            :aria-label="`上移书签 ${bookmark.title}`"
+            @click="$emit('move', -1)"
+          >
+            <AppIcon name="up" /></button
+          ><button
+            class="icon-button"
+            :disabled="last || busy"
+            :aria-label="`下移书签 ${bookmark.title}`"
+            @click="$emit('move', 1)"
+          >
+            <AppIcon name="down" /></button></template
+        ><button
+          class="icon-button"
+          :aria-label="`编辑书签 ${bookmark.title}`"
+          @click="$emit('edit', bookmark)"
+        >
+          <AppIcon name="edit" /></button
+        ><button
+          class="icon-button danger"
+          :aria-label="`删除书签 ${bookmark.title}`"
+          @click="$emit('delete', bookmark)"
+        >
+          <AppIcon name="trash" />
+        </button>
+      </div>
+    </div>
+  </article>
 </template>
-
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Bookmark } from '@/api/bookmarks'
-
-const props = defineProps<{ 
-  bookmark: Bookmark
-  simple?: boolean
+import { safeWebUrl } from '@/utils/feedback'
+import AppIcon from './AppIcon.vue'
+const props = withDefaults(
+  defineProps<{
+    bookmark: Bookmark
+    mode?: 'card' | 'list' | 'simple'
+    sortable?: boolean
+    first?: boolean
+    last?: boolean
+    busy?: boolean
+  }>(),
+  { mode: 'card' },
+)
+defineEmits<{
+  edit: [b: Bookmark]
+  delete: [b: Bookmark]
+  move: [direction: number]
 }>()
-defineEmits<{ edit: [b: Bookmark]; delete: [b: Bookmark] }>()
-
 const faviconError = ref(false)
-
-const faviconUrl = computed(() => {
-  if (faviconError.value) return defaultFavicon
-  if (props.bookmark.favicon_url) return props.bookmark.favicon_url
-  try {
-    const hostname = new URL(props.bookmark.url).hostname
-    return `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`
-  } catch {
-    return defaultFavicon
-  }
-})
-
-const defaultFavicon = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23EEEEEE'/><text x='8' y='12' text-anchor='middle' font-size='10' fill='%238E8E8E'>🔗</text></svg>`
-
-const displayUrl = computed(() => {
-  try {
-    const hostname = new URL(props.bookmark.url).hostname.replace('www.', '')
-    return hostname.length > 20 ? hostname.slice(0, 20) + '...' : hostname
-  } catch {
-    const url = props.bookmark.url
-    return url.length > 20 ? url.slice(0, 20) + '...' : url
-  }
-})
-
-function onFaviconError() {
-  faviconError.value = true
-}
+const safeUrl = computed(() => safeWebUrl(props.bookmark.url))
+const displayUrl = computed(() =>
+  safeUrl.value
+    ? new URL(safeUrl.value).hostname.replace(/^www\./, '')
+    : props.bookmark.url,
+)
+const faviconUrl = computed(() =>
+  props.bookmark.favicon_url
+    ? safeWebUrl(props.bookmark.favicon_url)
+    : safeUrl.value
+      ? `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(new URL(safeUrl.value).hostname)}`
+      : undefined,
+)
+watch(
+  () => props.bookmark.url,
+  () => {
+    faviconError.value = false
+  },
+)
 </script>
-
 <style scoped>
-.card {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background: var(--color-surface);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-border);
-  transition: border-color var(--transition);
-  gap: 12px;
-}
-.card:hover {
-  border-color: var(--color-border-subtle);
-}
-
-.card__link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
+.bookmark-card {
   min-width: 0;
-  text-decoration: none;
-}
-
-.card__favicon {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
-  object-fit: contain;
-  flex-shrink: 0;
-  background: var(--color-surface-alt);
-}
-
-.card__info {
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color 0.16s;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+}
+.bookmark-card:hover {
+  border-color: #ccd8ed;
+}
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-width: 0;
 }
-
-.card__title {
+.favicon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #f0f4fb;
+  color: #5579b4;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.favicon img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+.card-title {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-heading);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
-
-.card__url {
+.card-title:hover {
+  color: var(--color-primary);
+}
+.open-icon {
+  width: 14px;
+  color: #a1adc0;
+}
+.card-description {
   font-size: 12px;
   color: var(--color-placeholder);
-  white-space: nowrap;
+  margin: 15px 0 13px;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+  min-height: 36px;
 }
-
-.card__actions {
-  display: none;
-  gap: 4px;
+.card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  min-width: 0;
+}
+.card-host {
+  color: var(--color-placeholder);
+  font-size: 11px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+.card-actions {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
   flex-shrink: 0;
 }
-.card:hover .card__actions { display: flex; }
-
-.card__icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-placeholder);
-  padding: 4px;
-  border-radius: 4px;
+.card-actions .icon-button {
+  width: 27px;
+  height: 28px;
+}
+.card-actions svg {
+  width: 14px;
+  height: 14px;
+}
+.drag-handle {
+  cursor: grab;
+}
+.bookmark-card--list {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(100px, 1fr) minmax(
+      210px,
+      1fr
+    );
+  gap: 18px;
+  padding: 14px 18px;
+  align-items: center;
+  border-radius: 8px;
+}
+.bookmark-card--list .card-description {
+  margin: 0;
+  min-height: 0;
+}
+.bookmark-card--list .card-bottom {
+  margin: 0;
+}
+.bookmark-card--simple {
   display: flex;
-  transition: color var(--transition);
+  flex-direction: row;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 7px;
 }
-.card__icon-btn:hover { color: var(--color-body); }
-.card__icon-btn--danger:hover { color: var(--color-error); }
-
-/* Sortable drag styles */
-.bookmark-card--ghost {
-  opacity: 0.4;
-  background: var(--color-surface-alt);
+.bookmark-card--simple .card-top {
+  flex: 1;
+  min-width: 0;
 }
-.bookmark-card--chosen {
-  background: var(--color-surface-alt);
+.bookmark-card--simple .card-bottom {
+  margin: 0;
 }
-.bookmark-card--drag {
-  opacity: 0.9;
-  background: var(--color-surface);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  cursor: grabbing;
+.bookmark-card--simple .card-title {
+  font-weight: 400;
 }
-
-/* 简化模式样式 */
-.simple-link {
-  color: var(--color-body);
-  text-decoration: none;
-  font-size: 14px;
-  line-height: 1.6;
+.sort-ghost {
+  opacity: 0.3;
 }
-
-.simple-link:hover {
-  color: var(--color-primary);
-  text-decoration: underline;
+@media (max-width: 1000px) {
+  .bookmark-card--list {
+    grid-template-columns: minmax(130px, 1fr) minmax(200px, 1fr);
+  }
+  .bookmark-card--list .card-description {
+    display: none;
+  }
+}
+@media (max-width: 740px) {
+  .bookmark-card {
+    padding: 16px;
+  }
+  .bookmark-card--list {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .bookmark-card--simple {
+    padding: 10px;
+  }
+  .bookmark-card--simple .card-actions .drag-handle {
+    display: none;
+  }
+  .card-description {
+    min-height: 0;
+  }
+  .card-actions .icon-button {
+    width: 32px;
+    height: 32px;
+  }
 }
 </style>

@@ -1,23 +1,25 @@
 :root {
   /* Colors */
-  --color-primary:      #3E6AE1;
-  --color-primary-dark: #2f56c7;
-  --color-heading:      #171A20;
-  --color-body:         #393C41;
-  --color-tertiary:     #5C5E62;
-  --color-placeholder:  #8E8E8E;
-  --color-surface:      #FFFFFF;
-  --color-surface-alt:  #F4F4F4;
-  --color-border:       #EEEEEE;
-  --color-border-subtle:#D0D1D2;
-  --color-overlay:      rgba(128, 128, 128, 0.65);
-  --color-error:        #d32f2f;
+  --color-primary: #3567d8;
+  --color-primary-dark: #2859c5;
+  --color-heading: #202733;
+  --color-body: #394456;
+  --color-tertiary: #647083;
+  --color-placeholder: #7b8391;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f6f7f9;
+  --color-border: #e9ecf1;
+  --color-border-subtle: #d6dce6;
+  --color-overlay: #20324f38;
+  --color-error: #ae444d;
+  --color-blue-soft: #edf3ff;
+  --color-sidebar: #fafbfc;
 
   /* Typography */
-  --font-family: system-ui, -apple-system, Arial, sans-serif;
+  --font-family: 'Avenir Next', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
 
   /* Radius */
-  --radius-btn:  4px;
+  --radius-btn: 7px;
   --radius-card: 12px;
 
   /* Transitions */
