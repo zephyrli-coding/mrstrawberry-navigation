@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar">
+  <header class="navbar" :class="{ 'navbar--search': !!$slots.search }">
     <div class="breadcrumb">
       <button
         class="icon-button mobile-menu"
@@ -11,6 +11,7 @@
       ><span class="workspace-name">个人空间</span><span class="slash">/</span
       ><strong>{{ title }}</strong>
     </div>
+    <slot name="search" />
     <div ref="menuRef" class="account" @keydown.esc="closeMenu">
       <button
         ref="trigger"
@@ -88,6 +89,9 @@ onUnmounted(() => document.removeEventListener('click', outside))
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.navbar--search .breadcrumb {
+  max-width: 240px;
+}
 .workspace-name,
 .slash {
   color: var(--color-placeholder);
@@ -163,6 +167,13 @@ onUnmounted(() => document.removeEventListener('click', outside))
 .mobile-menu {
   display: none;
 }
+@media (max-width: 1100px) {
+  .navbar--search .workspace-name,
+  .navbar--search .slash,
+  .navbar--search .account-name {
+    display: none;
+  }
+}
 @media (max-width: 740px) {
   .navbar {
     height: 59px;
@@ -179,6 +190,13 @@ onUnmounted(() => document.removeEventListener('click', outside))
   }
   .breadcrumb {
     gap: 8px;
+  }
+  .navbar--search .breadcrumb {
+    flex-shrink: 0;
+  }
+  .navbar--search .breadcrumb strong,
+  .navbar--search .avatar-btn > svg {
+    display: none;
   }
 }
 </style>

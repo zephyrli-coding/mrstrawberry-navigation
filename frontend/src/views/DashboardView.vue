@@ -1,5 +1,8 @@
 <template>
   <AppShell :title="activeLabel">
+    <template #search>
+      <BookmarkSearch ref="searchInput" v-model="store.search" />
+    </template>
     <template #sidebar
       ><CategoryPanel
         :categories="store.categories"
@@ -14,31 +17,13 @@
     <main>
       <div class="page-head">
         <div>
-          <p class="eyebrow">{{ today }}</p>
           <h1>{{ activeLabel }}</h1>
-          <p class="subtitle">常用工具、研究资料与日常灵感，都在一处。</p>
         </div>
         <BaseButton
           :disabled="store.loading || !!store.error"
           @click="openBookmark(null)"
           ><AppIcon name="plus" />添加书签</BaseButton
         >
-      </div>
-      <div class="search-field">
-        <AppIcon name="search" /><input
-          ref="searchInput"
-          v-model="store.search"
-          type="search"
-          aria-label="搜索书签"
-          placeholder="搜索书签、网址、描述或分类…"
-        /><button
-          v-if="store.search"
-          class="icon-button"
-          aria-label="清除搜索"
-          @click="clearSearch"
-        >
-          <AppIcon name="close" /></button
-        ><kbd v-else>⌘ / Ctrl K</kbd>
       </div>
       <div class="toolbar">
         <div class="result-summary" role="status">
@@ -219,6 +204,7 @@ import AppShell from '@/components/AppShell.vue'
 import AppIcon from '@/components/AppIcon.vue'
 import CategoryPanel from '@/components/CategoryPanel.vue'
 import BookmarkCard from '@/components/BookmarkCard.vue'
+import BookmarkSearch from '@/components/BookmarkSearch.vue'
 import BookmarkModal from '@/components/BookmarkModal.vue'
 import CategoryModal from '@/components/CategoryModal.vue'
 import ConfirmModal from '@/components/ConfirmModal.vue'
@@ -226,16 +212,10 @@ import BaseButton from '@/components/BaseButton.vue'
 const store = useBookmarksStore(),
   route = useRoute(),
   router = useRouter()
-const searchInput = ref<HTMLInputElement | null>(null),
+const searchInput = ref<InstanceType<typeof BookmarkSearch> | null>(null),
   results = ref<HTMLElement | null>(null),
   revision = ref(0),
   sorting = ref(false)
-const today = new Intl.DateTimeFormat('zh-CN', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  weekday: 'long',
-}).format(new Date())
 const activeLabel = computed(() =>
   store.activeCategoryId !== null
     ? store.categories.find((c) => c.id === store.activeCategoryId)?.name ||
@@ -299,19 +279,8 @@ function clearSearch() {
   store.search = ''
   searchInput.value?.focus()
 }
-function keyboard(e: KeyboardEvent) {
-  if (
-    (e.metaKey || e.ctrlKey) &&
-    e.key.toLowerCase() === 'k' &&
-    !document.querySelector('dialog[open]')
-  ) {
-    e.preventDefault()
-    searchInput.value?.focus()
-  }
-}
 onMounted(() => {
   store.fetchAll()
-  document.addEventListener('keydown', keyboard)
 })
 const notice = ref(''),
   noticeError = ref(false)
@@ -473,7 +442,6 @@ watch(
   { flush: 'post' },
 )
 onUnmounted(() => {
-  document.removeEventListener('keydown', keyboard)
   initVersion++
   sortables.forEach((s) => s.destroy())
 })
@@ -481,10 +449,10 @@ onUnmounted(() => {
 <style scoped>
 .page-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin: 4px 0 26px;
+  margin: 0 0 14px;
 }
 .page-head h1 {
   font-size: 28px;
@@ -498,53 +466,13 @@ onUnmounted(() => {
 }
 .page-head > .btn {
   flex-shrink: 0;
-  margin-top: 7px;
-}
-.subtitle {
-  font-size: 12px;
-  color: var(--color-placeholder);
-  margin-top: 8px;
-}
-.search-field {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 5px 16px;
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: 9px;
-  color: var(--color-placeholder);
-}
-.search-field:focus-within {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px #3567d814;
-}
-.search-field input {
-  width: 100%;
-  padding: 13px 0;
-  border: none;
-  background: none;
-  font-size: 13px;
-  color: var(--color-heading);
-  outline: none;
-  min-width: 0;
-}
-.search-field input::-webkit-search-cancel-button {
-  display: none;
-}
-.search-field kbd {
-  font: 10px var(--font-family);
-  white-space: nowrap;
-  border: 1px solid var(--color-border);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 .toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 24px 0 20px;
+  margin: 0 0 16px;
 }
 .result-summary {
   font-size: 12px;
@@ -593,13 +521,13 @@ onUnmounted(() => {
   height: 15px;
 }
 .group + .group {
-  margin-top: 25px;
+  margin-top: 20px;
 }
 .group-heading {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 .group-heading h2 {
   font-size: 13px;
@@ -613,7 +541,7 @@ onUnmounted(() => {
 }
 .bookmark-collection {
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 .bookmark-collection--card {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -689,9 +617,14 @@ onUnmounted(() => {
     transform: rotate(360deg);
   }
 }
-@media (min-width: 1550px) {
+@media (min-width: 1350px) {
   .bookmark-collection--card {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1550px) {
+  .bookmark-collection--card {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 @media (max-width: 1150px) {
@@ -708,19 +641,9 @@ onUnmounted(() => {
   .page-head h1 {
     font-size: 25px;
   }
-  .page-head > .btn {
-    margin-top: 0;
-  }
-  .search-field {
-    padding: 3px 12px;
-  }
-  .search-field kbd {
-    display: none;
-  }
   .toolbar {
     flex-wrap: wrap;
     gap: 12px;
-    margin: 20px 0;
   }
   .toolbar-actions {
     gap: 6px;
