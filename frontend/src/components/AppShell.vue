@@ -67,7 +67,9 @@
       </div>
     </aside>
     <div class="workspace" :inert="mobileOpen">
-      <Navbar :title="title" :menu-expanded="mobileOpen" @menu="openSidebar" />
+      <Navbar :title="title" :menu-expanded="mobileOpen" @menu="openSidebar">
+        <template v-if="$slots.search" #search><slot name="search" /></template>
+      </Navbar>
       <div id="main-content" tabindex="-1" class="content"><slot /></div>
       <footer>
         © {{ new Date().getFullYear() }} 快刀切草莓君

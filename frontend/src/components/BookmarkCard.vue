@@ -28,17 +28,16 @@
       }}</span
       ><AppIcon v-if="mode === 'card'" class="open-icon" name="arrow" />
     </div>
-    <p
-      v-if="mode !== 'simple'"
-      class="card-description"
-      :title="bookmark.description || ''"
-    >
-      {{ bookmark.description || '暂无描述' }}
-    </p>
     <div class="card-bottom">
-      <span v-if="mode !== 'simple'" class="card-host" :title="bookmark.url">{{
-        safeUrl ? displayUrl : '网址不可打开，请编辑为 http / https'
-      }}</span>
+      <span
+        v-if="mode !== 'simple'"
+        class="card-host"
+        :title="description || bookmark.url"
+        >{{
+          description ||
+          (safeUrl ? displayUrl : '网址不可打开，请编辑为 http / https')
+        }}</span
+      >
       <div class="card-actions">
         <template v-if="sortable"
           ><button
@@ -101,6 +100,7 @@ defineEmits<{
   move: [direction: number]
 }>()
 const faviconError = ref(false)
+const description = computed(() => props.bookmark.description?.trim())
 const safeUrl = computed(() => safeWebUrl(props.bookmark.url))
 const displayUrl = computed(() =>
   safeUrl.value
@@ -127,7 +127,7 @@ watch(
   background: white;
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: 20px;
+  padding: 12px 14px;
   transition: border-color 0.16s;
   display: flex;
   flex-direction: column;
@@ -138,12 +138,12 @@ watch(
 .card-top {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 .favicon {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   flex-shrink: 0;
   display: grid;
   place-items: center;
@@ -153,8 +153,8 @@ watch(
   font-weight: 600;
 }
 .favicon img {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
 }
 .card-title {
@@ -174,22 +174,11 @@ watch(
   width: 14px;
   color: #a1adc0;
 }
-.card-description {
-  font-size: 12px;
-  color: var(--color-placeholder);
-  margin: 15px 0 13px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow-wrap: anywhere;
-  min-height: 36px;
-}
 .card-bottom {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: auto;
+  margin-top: 4px;
   min-width: 0;
 }
 .card-host {
@@ -220,18 +209,11 @@ watch(
 }
 .bookmark-card--list {
   display: grid;
-  grid-template-columns: minmax(150px, 1fr) minmax(100px, 1fr) minmax(
-      210px,
-      1fr
-    );
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 1fr);
   gap: 18px;
-  padding: 14px 18px;
+  padding: 10px 14px;
   align-items: center;
   border-radius: 8px;
-}
-.bookmark-card--list .card-description {
-  margin: 0;
-  min-height: 0;
 }
 .bookmark-card--list .card-bottom {
   margin: 0;
@@ -257,30 +239,16 @@ watch(
 .sort-ghost {
   opacity: 0.3;
 }
-@media (max-width: 1000px) {
-  .bookmark-card--list {
-    grid-template-columns: minmax(130px, 1fr) minmax(200px, 1fr);
-  }
-  .bookmark-card--list .card-description {
-    display: none;
-  }
-}
 @media (max-width: 740px) {
-  .bookmark-card {
-    padding: 16px;
-  }
   .bookmark-card--list {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 4px;
   }
   .bookmark-card--simple {
     padding: 10px;
   }
   .bookmark-card--simple .card-actions .drag-handle {
     display: none;
-  }
-  .card-description {
-    min-height: 0;
   }
   .card-actions .icon-button {
     width: 32px;
