@@ -17,7 +17,7 @@
       @keydown="sidebarKeys"
     >
       <RouterLink to="/" class="brand" @click="closeSidebar"
-        ><span class="brand-mark"><i /><i /><i /></span>compound</RouterLink
+        ><img class="brand-logo" src="/brand-strawberry.png" alt="快刀切草莓君" width="40" height="40" />compound</RouterLink
       >
       <details class="workspace-selector">
         <summary>
@@ -386,4 +386,5 @@ footer {
     padding: 20px 18px;
   }
 }
+.brand-logo { display: block; flex: 0 0 40px; width: 40px; height: 40px; object-fit: contain; }
 </style>
