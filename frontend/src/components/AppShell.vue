@@ -17,7 +17,7 @@
       @keydown="sidebarKeys"
     >
       <RouterLink to="/" class="brand" @click="closeSidebar"
-        ><img class="brand-logo" src="/brand-strawberry.png" alt="快刀切草莓君" width="40" height="40" />compound</RouterLink
+        ><img class="brand-logo" src="/brand-strawberry-a.png" alt="快刀切草莓君" width="40" height="40" />compound</RouterLink
       >
       <details class="workspace-selector">
         <summary>
