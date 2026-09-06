@@ -73,7 +73,6 @@
       <div id="main-content" tabindex="-1" class="content"><slot /></div>
       <footer>
         © {{ new Date().getFullYear() }} 快刀切草莓君
-        <span>闽ICP备18004703号-1</span>
       </footer>
     </div>
   </div>
