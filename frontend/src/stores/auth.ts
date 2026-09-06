@@ -11,7 +11,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   // 显示名称：优先使用昵称，其次是邮箱前缀
   const displayName = computed(() => {
-    if (user.value?.nickname) return user.value.nickname
+    const nickname = user.value?.nickname?.trim()
+    if (nickname) return nickname
     if (user.value?.email) return user.value.email.split('@')[0]
     return ''
   })

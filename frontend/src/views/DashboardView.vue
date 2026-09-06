@@ -90,7 +90,7 @@
       >
         <span class="spinner" />正在加载你的书签…
       </div>
-      <div v-else-if="store.error" class="empty-state">
+      <div v-else-if="store.error" class="cu-empty bookmark-empty">
         <AppIcon name="link" />
         <h2>暂时无法加载</h2>
         <p class="notice error" role="alert">{{ store.error }}</p>
@@ -98,9 +98,9 @@
           >重新加载</BaseButton
         >
       </div>
-      <div v-else-if="!store.filteredBookmarks.length" class="empty-state">
-        <AppIcon :name="store.search ? 'search' : 'compass'" />
-        <h2>
+      <div v-else-if="!store.filteredBookmarks.length" class="cu-empty bookmark-empty">
+        <span class="cu-empty-icon"><AppIcon :name="store.search ? 'search' : 'compass'" /></span>
+        <h3>
           {{
             store.search
               ? '没有找到匹配的书签'
@@ -108,7 +108,7 @@
                 ? '这个分类还没有书签'
                 : '收藏你的第一个好去处'
           }}
-        </h2>
+        </h3>
         <p>
           {{
             store.search
@@ -455,7 +455,6 @@ onUnmounted(() => {
   margin: 0 0 14px;
 }
 .page-head h1 {
-  font-size: 28px;
   font-weight: 600;
   letter-spacing: -0.7px;
   line-height: 1.4;
@@ -559,16 +558,15 @@ onUnmounted(() => {
   line-height: 20px;
   margin-left: 8px;
 }
-.empty-state {
-  border: 1px dashed var(--color-border-subtle);
+.bookmark-empty {
+  border: 1px solid var(--color-border-subtle);
   border-radius: 12px;
   background: #ffffff70;
-  padding: 65px 24px;
+  padding: 32px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 16px;
 }
 .empty-state > svg {
   width: 30px;
@@ -639,7 +637,6 @@ onUnmounted(() => {
     margin-top: 0;
   }
   .page-head h1 {
-    font-size: 25px;
   }
   .toolbar {
     flex-wrap: wrap;

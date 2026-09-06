@@ -31,7 +31,7 @@ export function redirectToAuthPage(path = 'login') {
     redirect_uri: getRedirectUri(),
     state,
   })
-  window.location.href = `${AUTH_SERVICE_URL}/auth/${path}?${params.toString()}`
+  window.location.href = `${AUTH_SERVICE_URL}${path === 'login' ? '/oauth/authorize' : `/auth/${path}`}?${params.toString()}`
 }
 
 export function redirectToAuthLogin() {
