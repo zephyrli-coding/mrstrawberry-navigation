@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar" :class="{ 'navbar--search': !!$slots.search }">
+  <header class="navbar cu-topbar" :class="{ 'navbar--search': !!$slots.search }">
     <div class="breadcrumb">
       <button
         class="icon-button mobile-menu"
@@ -8,72 +8,42 @@
         @click="$emit('menu')"
       >
         <AppIcon name="menu" /></button
-      ><span class="workspace-name">个人空间</span><span class="slash">/</span
+      ><span class="workspace-name">工作空间</span><span class="slash">/</span
       ><strong>{{ title }}</strong>
     </div>
     <slot name="search" />
-    <div ref="menuRef" class="account" @keydown.esc="closeMenu">
-      <button
-        ref="trigger"
-        class="avatar-btn"
-        :aria-expanded="menuOpen"
-        aria-label="账号菜单"
-        @click="menuOpen = !menuOpen"
-      >
-        <span class="avatar">{{ displayInitial }}</span
-        ><span class="account-name">{{ auth.displayName }}</span
-        ><AppIcon name="down" />
-      </button>
-      <div v-if="menuOpen" class="dropdown">
-        <p>{{ auth.user?.email }}</p>
-        <RouterLink to="/profile" @click="menuOpen = false"
-          ><AppIcon name="settings" />个人设置与备份</RouterLink
-        >
-        <a :href="`${AUTH_SERVICE_URL}/auth/profile`"
-          ><AppIcon name="user" />统一账号中心</a
-        >
-        <button @click="handleLogout"><AppIcon name="logout" />退出登录</button>
-      </div>
-    </div>
+    <details class="cu-disclosure cu-account" data-popover="account">
+      <summary aria-label="账号菜单" aria-expanded="false"><span class="cu-avatar">{{ displayInitial }}</span><span class="cu-account-name">{{ auth.displayName }}</span><AppIcon class="cu-chevron" name="down" /></summary>
+      <div class="cu-menu"><p class="cu-account-email">{{ auth.user?.email }}</p><a :href="`${AUTH_SERVICE_URL}/auth/profile`"><AppIcon name="user" />账号中心</a><RouterLink to="/profile"><AppIcon name="settings" />个人设置与备份</RouterLink><button class="cu-logout" :disabled="leaving" @click="handleLogout"><AppIcon name="logout" />{{ leaving ? '正在退出…' : '退出所有应用' }}</button><p v-if="error" role="alert" class="cu-account-email">{{ error }}</p></div>
+    </details>
   </header>
 </template>
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { AUTH_SERVICE_URL } from '@/api/client'
 import AppIcon from './AppIcon.vue'
 defineProps<{ title?: string; menuExpanded?: boolean }>()
 defineEmits<{ menu: [] }>()
 const auth = useAuthStore()
-const menuOpen = ref(false)
-const menuRef = ref<HTMLElement | null>(null)
-const trigger = ref<HTMLButtonElement | null>(null)
-const displayInitial = computed(
-  () => auth.displayName.charAt(0).toUpperCase() || '?',
-)
-function closeMenu() {
-  menuOpen.value = false
-  trigger.value?.focus()
-}
-function outside(e: MouseEvent) {
-  if (!menuRef.value?.contains(e.target as Node)) menuOpen.value = false
-}
+const leaving = ref(false)
+const error = ref('')
+const displayInitial = computed(() => auth.displayName.charAt(0).toUpperCase() || '?')
 async function handleLogout() {
-  menuOpen.value = false
-  await auth.logout()
+  leaving.value = true
+  error.value = ''
+  try { await auth.logout() } catch { error.value = '退出未完成，请重试。' } finally { leaving.value = false }
 }
-onMounted(() => document.addEventListener('click', outside))
-onUnmounted(() => document.removeEventListener('click', outside))
 </script>
 <style scoped>
 .navbar {
-  height: 67px;
+
   border-bottom: 1px solid var(--color-border);
   background: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 35px;
+
   gap: 16px;
 }
 .breadcrumb {
@@ -97,87 +67,20 @@ onUnmounted(() => document.removeEventListener('click', outside))
   color: var(--color-placeholder);
   white-space: nowrap;
 }
-.account {
-  position: relative;
-  flex-shrink: 0;
-}
-.avatar-btn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 5px;
-  border-radius: 7px;
-  font-size: 12px;
-}
-.avatar {
-  width: 31px;
-  height: 31px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--color-primary);
-  background: var(--color-blue-soft);
-  font-weight: 600;
-}
-.account-name {
-  max-width: 140px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 10px);
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  width: 240px;
-  max-width: calc(100vw - 32px);
-  padding: 7px;
-  z-index: 60;
-  box-shadow: 0 8px 28px #25344a18;
-}
-.dropdown p {
-  padding: 10px;
-  font-size: 12px;
-  overflow-wrap: anywhere;
-  color: var(--color-placeholder);
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 5px;
-}
-.dropdown a,
-.dropdown button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  text-align: left;
-}
-.dropdown a:hover,
-.dropdown button:hover {
-  background: var(--color-blue-soft);
-}
-.dropdown button {
-  color: var(--color-error);
-}
 .mobile-menu {
   display: none;
 }
 @media (max-width: 1100px) {
   .navbar--search .workspace-name,
   .navbar--search .slash,
-  .navbar--search .account-name {
+  .navbar--search .cu-account-name {
     display: none;
   }
 }
-@media (max-width: 740px) {
+@media (max-width: 959px) {
   .navbar {
-    height: 59px;
-    padding: 0 16px;
+
+
     gap: 8px;
   }
   .mobile-menu {
@@ -185,7 +88,7 @@ onUnmounted(() => document.removeEventListener('click', outside))
   }
   .workspace-name,
   .slash,
-  .account-name {
+  .cu-account-name {
     display: none;
   }
   .breadcrumb {
@@ -194,8 +97,7 @@ onUnmounted(() => document.removeEventListener('click', outside))
   .navbar--search .breadcrumb {
     flex-shrink: 0;
   }
-  .navbar--search .breadcrumb strong,
-  .navbar--search .avatar-btn > svg {
+  .navbar--search .breadcrumb strong {
     display: none;
   }
 }

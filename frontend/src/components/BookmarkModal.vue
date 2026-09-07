@@ -137,7 +137,10 @@ function close() {
 }
 select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 9px 11px;
+  font-size: 13px;
+  line-height: 20px;
+  min-height: 40px;
   border: 1px solid var(--color-border-subtle);
   border-radius: 7px;
   background: white;

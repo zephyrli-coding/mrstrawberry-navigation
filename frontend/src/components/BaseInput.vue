@@ -50,9 +50,11 @@ input {
   border: 1px solid var(--color-border-subtle);
   border-radius: 7px;
   background: white;
-  padding: 10px 12px;
+  padding: 9px 11px;
   color: var(--color-heading);
   font: inherit;
+  font-size: 13px;
+  line-height: 20px;
   min-height: 40px;
 }
 input::placeholder {

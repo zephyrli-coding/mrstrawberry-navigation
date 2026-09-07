@@ -11,3 +11,6 @@ app.use(pinia)
 
 app.use(router)
 app.mount('#app')
+
+import './shared/shared-shell.css'
+import './shared/shared-shell.js'

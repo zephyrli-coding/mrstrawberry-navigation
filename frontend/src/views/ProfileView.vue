@@ -322,7 +322,6 @@ async function confirmImport() {
   margin-bottom: 26px;
 }
 .page-head h1 {
-  font-size: 27px;
   font-weight: 600;
   letter-spacing: -0.7px;
 }
@@ -491,7 +490,6 @@ fieldset small {
     padding: 18px;
   }
   .page-head h1 {
-    font-size: 25px;
   }
   dl > div {
     grid-template-columns: 70px minmax(0, 1fr);

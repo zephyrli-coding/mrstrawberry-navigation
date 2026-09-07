@@ -32,10 +32,11 @@ withDefaults(
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 0 20px;
+  min-height: var(--cu-control-height);
+  padding: 8px 14px;
   border-radius: var(--radius-btn);
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 20px;
   font-weight: 500;
   font-family: var(--font-family);
   cursor: pointer;
