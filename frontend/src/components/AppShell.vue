@@ -61,7 +61,7 @@
       </div>
     </aside>
     <div class="workspace" :inert="mobileOpen">
-      <div class="cu-mobile-nav"><button aria-label="打开导航菜单" aria-controls="product-navigation" :aria-expanded="mobileOpen" @click="openSidebar"><AppIcon name="menu" />导航</button></div>
+      <header class="cu-mobile-topbar"><div class="cu-mobile-topbar-left"><button class="cu-nav-toggle" aria-label="打开导航菜单" aria-controls="product-navigation" :aria-expanded="mobileOpen" @click="openSidebar"><AppIcon name="menu" /></button><RouterLink to="/" class="cu-mobile-brand" aria-label="Compound 首页"><img src="/brand-strawberry-a.png" alt="" width="32" height="32" /><span>Compound</span></RouterLink></div><AccountMenu placement="header" /></header>
       <div id="main-content" tabindex="-1" class="content cu-content"><slot /></div>
       <footer class="cu-footer"><span>Compound · Navigation</span><span>独立应用 · 统一账号</span></footer>
     </div>
