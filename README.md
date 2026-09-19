@@ -36,7 +36,7 @@ SQLite 为 `./data/navigation.db` → `/app/data/navigation.db`；Redis 使用�
 
 ## 开发和维护
 
-- [书签搜索位置调整](docs/search-placement-2026-09-19.md)：搜索移入页面标题行及响应式验证。
+- [书签搜索位置调整](docs/search-placement-2026-09-19.md)：搜索位于排序左侧、输入框底色及响应式验证。
 - [列表与简化模式本地迭代](docs/list-simple-layout-2026-09-19.md)：列表补充网址、简化名称网格及本地验证记录。
 
 - 后端入口 `backend/main.py`，路由 `backend/app/routers/`。

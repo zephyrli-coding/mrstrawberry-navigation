@@ -16,7 +16,6 @@
         <div>
           <h1>{{ activeLabel }}</h1>
         </div>
-        <BookmarkSearch ref="searchInput" v-model="store.search" class="page-search" />
         <BaseButton
           :disabled="store.loading || !!store.error"
           @click="openBookmark(null)"
@@ -29,45 +28,44 @@
             · 搜索结果</span
           ><span v-else> · {{ store.categories.length }} 个分类</span>
         </div>
-        <div class="toolbar-actions">
-          <label class="sort-select"
-            ><span class="sr-only">书签排序</span
-            ><select
-              :value="store.sortMode"
-              aria-label="书签排序"
-              @change="
-                setSort(($event.target as HTMLSelectElement).value as SortMode)
-              "
-            >
-              <option value="manual">自定义排序</option>
-              <option value="title">标题排序</option>
-              <option value="recent">最近添加</option>
-            </select></label
+        <BookmarkSearch ref="searchInput" v-model="store.search" class="toolbar-search" />
+        <label class="sort-select"
+          ><span class="sr-only">书签排序</span
+          ><select
+            :value="store.sortMode"
+            aria-label="书签排序"
+            @change="
+              setSort(($event.target as HTMLSelectElement).value as SortMode)
+            "
           >
-          <div class="view-switch" aria-label="视图切换">
-            <button
-              :aria-pressed="store.viewMode === 'card'"
-              aria-label="网格视图"
-              title="网格视图"
-              @click="store.setViewMode('card')"
-            >
-              <AppIcon name="grid" /></button
-            ><button
-              :aria-pressed="store.viewMode === 'list'"
-              aria-label="列表视图"
-              title="列表视图"
-              @click="store.setViewMode('list')"
-            >
-              <AppIcon name="list" /></button
-            ><button
-              :aria-pressed="store.viewMode === 'simple'"
-              aria-label="简化视图"
-              title="简化视图"
-              @click="store.setViewMode('simple')"
-            >
-              简
-            </button>
-          </div>
+            <option value="manual">自定义排序</option>
+            <option value="title">标题排序</option>
+            <option value="recent">最近添加</option>
+          </select></label
+        >
+        <div class="view-switch" aria-label="视图切换">
+          <button
+            :aria-pressed="store.viewMode === 'card'"
+            aria-label="网格视图"
+            title="网格视图"
+            @click="store.setViewMode('card')"
+          >
+            <AppIcon name="grid" /></button
+          ><button
+            :aria-pressed="store.viewMode === 'list'"
+            aria-label="列表视图"
+            title="列表视图"
+            @click="store.setViewMode('list')"
+          >
+            <AppIcon name="list" /></button
+          ><button
+            :aria-pressed="store.viewMode === 'simple'"
+            aria-label="简化视图"
+            title="简化视图"
+            @click="store.setViewMode('simple')"
+          >
+            简
+          </button>
         </div>
       </div>
       <div
@@ -447,14 +445,10 @@ onUnmounted(() => {
 <style scoped>
 .page-head {
   display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(180px, 520px) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 20px;
   margin: 0 0 14px;
-}
-.page-head .page-search {
-  width: 100%;
-  margin-left: 0;
 }
 .page-head h1 {
   font-weight: 600;
@@ -469,9 +463,9 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 .toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, 360px) auto auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin: 0 0 16px;
 }
@@ -483,10 +477,14 @@ onUnmounted(() => {
 .result-summary span {
   color: var(--color-placeholder);
 }
-.toolbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.toolbar .toolbar-search {
+  width: 100%;
+  margin-left: 0;
+  background: var(--color-surface);
+  border-color: #d5dce8;
+}
+.toolbar .toolbar-search:focus-within {
+  border-color: var(--color-primary);
 }
 .sort-select select {
   border: none;
@@ -641,17 +639,22 @@ onUnmounted(() => {
     gap: 12px;
     margin-top: 0;
   }
-  .page-head .page-search {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    max-width: none;
-  }
   .toolbar {
-    flex-wrap: wrap;
-    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
-  .toolbar-actions {
-    gap: 6px;
+  .toolbar-search {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .sort-select {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+  }
+  .view-switch {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
   .bookmark-collection--card {
     grid-template-columns: 1fr;
