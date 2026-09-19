@@ -36,6 +36,8 @@ SQLite 为 `./data/navigation.db` → `/app/data/navigation.db`；Redis 使用�
 
 ## 开发和维护
 
+- [列表与简化模式本地迭代](docs/list-simple-layout-2026-09-19.md)：列表补充网址、简化名称网格及本地验证记录。
+
 - 后端入口 `backend/main.py`，路由 `backend/app/routers/`。
 - 前端入口 `frontend/src/main.ts`，在 `frontend` 运行 `npm ci`、`npm run dev` 或 `npm run build`。
 - 认证回归入口为 `backend/tests/test_app.py`，应在隔离本地 Docker 环境运行；测试会创建并删除测试数据库，禁止指向生产或个人业务库。

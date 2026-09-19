@@ -225,7 +225,7 @@ const activeLabel = computed(() =>
       : '全部书签',
 )
 const canSort = computed(
-  () => store.sortMode === 'manual' && !store.search.trim() && !sorting.value,
+  () => store.viewMode !== 'simple' && store.sortMode === 'manual' && !store.search.trim() && !sorting.value,
 )
 const groups = computed(() => {
   if (store.activeCategoryId !== null || store.sortMode !== 'manual')
@@ -545,8 +545,11 @@ onUnmounted(() => {
 .bookmark-collection--card {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.bookmark-collection--list,
+.bookmark-collection--list {
+  gap: 8px;
+}
 .bookmark-collection--simple {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
   gap: 8px;
 }
 .notice {
