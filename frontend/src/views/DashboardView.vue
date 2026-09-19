@@ -1,8 +1,5 @@
 <template>
   <AppShell :title="activeLabel">
-    <template #search>
-      <BookmarkSearch ref="searchInput" v-model="store.search" />
-    </template>
     <template #sidebar
       ><CategoryPanel
         :categories="store.categories"
@@ -19,6 +16,7 @@
         <div>
           <h1>{{ activeLabel }}</h1>
         </div>
+        <BookmarkSearch ref="searchInput" v-model="store.search" class="page-search" />
         <BaseButton
           :disabled="store.loading || !!store.error"
           @click="openBookmark(null)"
@@ -448,11 +446,15 @@ onUnmounted(() => {
 </script>
 <style scoped>
 .page-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, 520px) auto;
   align-items: center;
-  justify-content: space-between;
   gap: 20px;
   margin: 0 0 14px;
+}
+.page-head .page-search {
+  width: 100%;
+  margin-left: 0;
 }
 .page-head h1 {
   font-weight: 600;
@@ -635,11 +637,14 @@ onUnmounted(() => {
 }
 @media (max-width: 740px) {
   .page-head {
-    flex-wrap: wrap;
-    gap: 15px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
     margin-top: 0;
   }
-  .page-head h1 {
+  .page-head .page-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: none;
   }
   .toolbar {
     flex-wrap: wrap;
