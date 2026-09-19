@@ -3,79 +3,94 @@
     :class="['bookmark-card', `bookmark-card--${mode}`]"
     :data-id="bookmark.id"
   >
-    <div class="card-top">
-      <span v-if="mode !== 'simple'" class="favicon"
-        ><img
-          v-if="faviconUrl && !faviconError"
-          :src="faviconUrl"
-          alt=""
-          loading="lazy"
-          referrerpolicy="no-referrer"
-          @error="faviconError = true"
-        /><span v-else>{{
-          bookmark.title.slice(0, 1).toUpperCase()
-        }}</span></span
-      ><a
+    <template v-if="mode === 'simple'">
+      <a
         v-if="safeUrl"
         :href="safeUrl"
         target="_blank"
         rel="noopener noreferrer"
-        class="card-title"
+        class="card-title simple-link"
         :title="bookmark.title"
         >{{ bookmark.title }}</a
-      ><span v-else class="card-title" :title="bookmark.title">{{
-        bookmark.title
-      }}</span
-      ><AppIcon v-if="mode === 'card'" class="open-icon" name="arrow" />
-    </div>
-    <div class="card-bottom">
-      <span
-        v-if="mode !== 'simple'"
-        class="card-host"
-        :title="description || bookmark.url"
-        >{{
-          description ||
-          (safeUrl ? displayUrl : '网址不可打开，请编辑为 http / https')
-        }}</span
       >
-      <div class="card-actions">
-        <template v-if="sortable"
-          ><button
-            class="icon-button drag-handle"
-            tabindex="-1"
-            :aria-label="`拖动书签 ${bookmark.title}`"
-            title="拖动排序"
-          >
-            <AppIcon name="drag" /></button
-          ><button
-            class="icon-button"
-            :disabled="first || busy"
-            :aria-label="`上移书签 ${bookmark.title}`"
-            @click="$emit('move', -1)"
-          >
-            <AppIcon name="up" /></button
-          ><button
-            class="icon-button"
-            :disabled="last || busy"
-            :aria-label="`下移书签 ${bookmark.title}`"
-            @click="$emit('move', 1)"
-          >
-            <AppIcon name="down" /></button></template
-        ><button
-          class="icon-button"
-          :aria-label="`编辑书签 ${bookmark.title}`"
-          @click="$emit('edit', bookmark)"
-        >
-          <AppIcon name="edit" /></button
-        ><button
-          class="icon-button danger"
-          :aria-label="`删除书签 ${bookmark.title}`"
-          @click="$emit('delete', bookmark)"
-        >
-          <AppIcon name="trash" />
-        </button>
+      <span v-else class="card-title simple-link" :title="bookmark.title">{{ bookmark.title }}</span>
+    </template>
+    <template v-else>
+      <div class="card-top">
+        <span class="favicon"
+          ><img
+            v-if="faviconUrl && !faviconError"
+            :src="faviconUrl"
+            alt=""
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            @error="faviconError = true"
+          /><span v-else>{{
+            bookmark.title.slice(0, 1).toUpperCase()
+          }}</span></span
+        ><div class="card-identity"><a
+          v-if="safeUrl"
+          :href="safeUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="card-title"
+          :title="bookmark.title"
+          >{{ bookmark.title }}</a
+        ><span v-else class="card-title" :title="bookmark.title">{{
+          bookmark.title
+        }}</span>
+        <span v-if="mode === 'list'" class="card-url" :title="bookmark.url">{{ bookmark.url }}</span>
+        </div><AppIcon v-if="mode === 'card'" class="open-icon" name="arrow" />
       </div>
-    </div>
+      <div class="card-bottom">
+        <span
+          class="card-host"
+          :title="description || bookmark.url"
+          >{{
+            mode === 'list'
+              ? description || '暂无描述'
+              : description || (safeUrl ? displayUrl : '网址不可打开，请编辑为 http / https')
+          }}</span
+        >
+        <div class="card-actions">
+          <template v-if="sortable"
+            ><button
+              class="icon-button drag-handle"
+              tabindex="-1"
+              :aria-label="`拖动书签 ${bookmark.title}`"
+              title="拖动排序"
+            >
+              <AppIcon name="drag" /></button
+            ><button
+              class="icon-button"
+              :disabled="first || busy"
+              :aria-label="`上移书签 ${bookmark.title}`"
+              @click="$emit('move', -1)"
+            >
+              <AppIcon name="up" /></button
+            ><button
+              class="icon-button"
+              :disabled="last || busy"
+              :aria-label="`下移书签 ${bookmark.title}`"
+              @click="$emit('move', 1)"
+            >
+              <AppIcon name="down" /></button></template
+          ><button
+            class="icon-button"
+            :aria-label="`编辑书签 ${bookmark.title}`"
+            @click="$emit('edit', bookmark)"
+          >
+            <AppIcon name="edit" /></button
+          ><button
+            class="icon-button danger"
+            :aria-label="`删除书签 ${bookmark.title}`"
+            @click="$emit('delete', bookmark)"
+          >
+            <AppIcon name="trash" />
+          </button>
+        </div>
+      </div>
+    </template>
   </article>
 </template>
 <script setup lang="ts">
@@ -157,7 +172,21 @@ watch(
   height: 20px;
   object-fit: contain;
 }
+.card-identity {
+  flex: 1;
+  min-width: 0;
+}
+.card-url {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-placeholder);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .card-title {
+  display: block;
   font-size: 13px;
   font-weight: 600;
   color: var(--color-heading);
@@ -209,7 +238,7 @@ watch(
 }
 .bookmark-card--list {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(210px, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
   gap: 18px;
   padding: 10px 14px;
   align-items: center;
@@ -218,23 +247,33 @@ watch(
 .bookmark-card--list .card-bottom {
   margin: 0;
 }
+.bookmark-card--list .card-host {
+  color: var(--color-tertiary);
+  white-space: normal;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .bookmark-card--simple {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  align-items: center;
-  padding: 8px 12px;
+  padding: 0;
   border-radius: 7px;
 }
-.bookmark-card--simple .card-top {
-  flex: 1;
-  min-width: 0;
+.bookmark-card--simple:hover {
+  background: var(--color-surface-alt);
 }
-.bookmark-card--simple .card-bottom {
-  margin: 0;
-}
-.bookmark-card--simple .card-title {
+.simple-link {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px;
+  min-height: 44px;
+  line-height: 20px;
   font-weight: 400;
+  border-radius: inherit;
+}
+.simple-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
 }
 .sort-ghost {
   opacity: 0.3;
@@ -244,11 +283,11 @@ watch(
     grid-template-columns: 1fr;
     gap: 4px;
   }
-  .bookmark-card--simple {
-    padding: 10px;
+  .bookmark-card--list .card-bottom {
+    flex-wrap: wrap;
   }
-  .bookmark-card--simple .card-actions .drag-handle {
-    display: none;
+  .bookmark-card--list .card-host {
+    flex-basis: 100%;
   }
   .card-actions .icon-button {
     width: 32px;
