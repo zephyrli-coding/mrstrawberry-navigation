@@ -9,6 +9,7 @@
       @click="closeSidebar"
     />
     <aside
+      id="product-navigation"
       ref="sidebar"
       :class="['sidebar', 'cu-sidebar', { open: mobileOpen }]"
       :role="mobileOpen ? 'dialog' : undefined"
@@ -16,9 +17,10 @@
       aria-label="导航菜单"
       @keydown="sidebarKeys"
     >
-      <RouterLink to="/" class="brand cu-brand" @click="closeSidebar"
+      <div class="cu-sidebar-header">      <RouterLink to="/" class="brand cu-brand" @click="closeSidebar"
         ><img class="brand-logo" src="/brand-strawberry-a.png" alt="快刀切草莓君" width="40" height="40" /><span>Compound</span></RouterLink
       >
+<button class="cu-drawer-close" aria-label="关闭导航" @click="closeSidebar"><AppIcon name="close" /></button></div>
       <details class="cu-disclosure cu-product" data-popover="product">
         <summary aria-label="切换产品" aria-expanded="false"><span class="cu-product-icon"><AppIcon name="compass" /></span><span class="cu-product-copy"><strong>Navigation</strong><small>常用工具与书签</small></span><AppIcon class="cu-chevron" name="down" /></summary>
         <nav class="cu-menu" aria-label="切换产品"><a v-for="product in products" :key="product.id" :href="product.id === 'account' ? `${AUTH_SERVICE_URL}/auth/profile` : product.id === 'navigation' ? '/' : (local ? product.localUrl : product.productionUrl)" :aria-current="product.id === 'navigation' ? 'page' : undefined"><AppIcon :name="product.icon" /><span class="cu-product-copy"><strong>{{ product.name }}</strong><small>{{ product.description }}</small></span><span v-if="product.id === 'navigation'" class="cu-current">当前</span></a></nav>
@@ -53,16 +55,13 @@
           :class="{ active: route.path === '/profile' }"
           @click="closeSidebar"
           ><AppIcon name="settings" />个人设置与备份</RouterLink
-        ><a :href="`${AUTH_SERVICE_URL}/auth/profile`"
-          ><AppIcon name="user" />账号中心</a
         >
+        <AccountMenu />
         <p class="cu-sidebar-note">独立应用 · 统一账号</p>
       </div>
     </aside>
     <div class="workspace" :inert="mobileOpen">
-      <Navbar :title="title" :menu-expanded="mobileOpen" @menu="openSidebar">
-        <template v-if="$slots.search" #search><slot name="search" /></template>
-      </Navbar>
+      <header class="cu-mobile-topbar"><div class="cu-mobile-topbar-left"><button class="cu-nav-toggle" aria-label="打开导航菜单" aria-controls="product-navigation" :aria-expanded="mobileOpen" @click="openSidebar"><AppIcon name="menu" /></button><RouterLink to="/" class="cu-mobile-brand" aria-label="Compound 首页"><img src="/brand-strawberry-a.png" alt="" width="32" height="32" /><span>Compound</span></RouterLink></div><AccountMenu placement="header" /></header>
       <div id="main-content" tabindex="-1" class="content cu-content"><slot /></div>
       <footer class="cu-footer"><span>Compound · Navigation</span><span>独立应用 · 统一账号</span></footer>
     </div>
@@ -73,7 +72,7 @@ import { ref, nextTick, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useBookmarksStore } from '@/stores/bookmarks'
 import { AUTH_SERVICE_URL } from '@/api/client'
-import Navbar from './Navbar.vue'
+import AccountMenu from './AccountMenu.vue'
 import AppIcon from './AppIcon.vue'
 import products from '@/shared/products.json'
 defineProps<{ title: string }>()
@@ -225,7 +224,7 @@ onUnmounted(() => {
   padding-top: 12px;
   margin-top: auto;
 }
-.sidebar-bottom p {
+.sidebar-bottom > p {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -235,7 +234,7 @@ onUnmounted(() => {
   font-size: 10px;
   color: var(--color-placeholder);
 }
-.sidebar-bottom p svg {
+.sidebar-bottom > p svg {
   width: 14px;
   height: 14px;
 }
