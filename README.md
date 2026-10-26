@@ -45,3 +45,7 @@ SQLite 为 `./data/navigation.db` → `/app/data/navigation.db`；Redis 使用�
 - [当前接入契约](https://github.com/zephyrli-coding/compound-infra/blob/main/docs/integrations/navigation.md)、[统一开发流程](https://github.com/zephyrli-coding/compound-infra/blob/main/docs/development/README.md)、[部署检查清单](https://github.com/zephyrli-coding/compound-infra/blob/main/docs/operations/deployment-checklist.md)。
 
 文档整理于 2026-09-05；上线证据依据 2026-08-30 记录，本次没有重新部署或执行测试。
+
+### 本地账号关联（2026-10-26 开发分支）
+
+已绑定同一 Auth `sub` 的 active 本地账号正常登录，未验证邮箱也可新建独立账号映射。相同邮箱若已绑定另一 `sub`，返回 409，不能自动覆盖；未绑定的历史记录只有真实已验证邮箱才可原子认领。冲突需管理员处理账号关联，不是额外业务邮箱门禁。本地禁用仍拒绝登录；失败不建立业务会话，不改原有数据归属。本轮无需 schema 迁移。
